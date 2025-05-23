@@ -1,6 +1,13 @@
 {
   "name": "ts-fluor",
   "version": "1.0.0",
+  "author": "Eric Blond <eb2501@gmail.com>",
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE"
+  ],
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -8,8 +15,6 @@
     "prepare": "npm run build"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
   "description": "",
   "devDependencies": {
     "@types/node": "^22.15.21",
