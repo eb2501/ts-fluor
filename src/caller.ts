@@ -1,6 +1,6 @@
 import { Callee } from "./callee";
 
-class Ticket {
+class Finalizer {
     private readonly ref: WeakRef<Caller>;
     private readonly callees: Callee[];
 
@@ -16,7 +16,7 @@ class Ticket {
 
 ///////
 
-const registry = new FinalizationRegistry<Ticket>((ticket) => ticket.burn());
+const registry = new FinalizationRegistry<Finalizer>((ticket) => ticket.burn());
 
 ///////
 
@@ -28,7 +28,7 @@ export class Caller extends Callee {
         super();
         registry.register(
             this.ref,
-            new Ticket(this.ref, this._callees),
+            new Finalizer(this.ref, this._callees),
         );
     }
 
