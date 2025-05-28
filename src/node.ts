@@ -1,10 +1,7 @@
-import { Callee } from "./callee";
 import { Caller } from "./caller";
 import { Clear } from "./clear";
 import { Notifier, Ticket } from "./notifier";
 import { Read } from "./read";
-
-let callees: Set<Callee> | null = null;
 
 
 type NodeEvent = "cache" | "clear";
@@ -22,20 +19,13 @@ export class Node<T> extends Caller implements Read<T>, Clear {
     }
 
     get(): T {
-        if (callees) {
-            callees.add(this);
-        }
+        this.hit();
         if (!this.cached) {
-            const backup = callees;
-            callees = new Set();
-            try {
+            this.apply(() => {
                 this.value = this.getter();
                 this.cached = true;
-                callees.forEach((callee) => this.link(callee));
-                this.notifier.dispatch("cache");
-            } finally {
-                callees = backup;
-            }
+            });
+            this.notifier.dispatch("cache");
         }
         return this.value as T;
     }

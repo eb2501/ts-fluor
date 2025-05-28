@@ -4,7 +4,7 @@ import { Clear } from "./clear";
 import { Read } from "./read";
 import { Write } from "./write";
 
-class Page {
+export class Page {
 
     protected cell<T>(value: T): Write<T> & Clear {
         return new Cell(value);

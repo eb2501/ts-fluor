@@ -19,6 +19,7 @@ export class Cell<T> extends Callee implements Write<T> {
     }
 
     get(): T {
+        this.hit();
         return this.cache;
     }
 
