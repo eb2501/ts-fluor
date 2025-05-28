@@ -1,13 +1,12 @@
 import { Callee } from "./callee";
-import { Clear } from "./clear";
-import { Notifier, Ticket } from "./notifier";
+import { Listener, Notifier, Source } from "./event";
+import { Ticket } from "./ticket";
 import { Write } from "./write";
 
 
-type CellEvent = "set" | "clear";
+export type CellEvent = "set" | "clear";
 
-
-export class Cell<T> extends Callee implements Write<T> {
+export class Cell<T> extends Callee implements Write<T>, Source<CellEvent> {
     private readonly notifier = new Notifier<CellEvent>()
     private readonly original: T;
     private cache: T;
@@ -26,16 +25,16 @@ export class Cell<T> extends Callee implements Write<T> {
     set(value: T): void {
         this.cache = value;
         super.clear();
-        this.notifier.dispatch("set");
+        this.notifier.notify("set");
     }
 
     clear(): void {
         this.cache = this.original;
         super.clear();
-        this.notifier.dispatch("clear");
+        this.notifier.notify("clear");
     }
 
-    register(listener: (event: CellEvent) => void): Ticket {
-        return this.notifier.register(listener);
+    add(listener: Listener<CellEvent>): Ticket {
+        return this.notifier.add(listener);
     }
 }

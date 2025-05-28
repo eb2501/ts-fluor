@@ -1,6 +1,7 @@
 import { Callee, _context } from "./callee";
+import { Ticket } from "./ticket";
 
-class Finalizer {
+class FinalizerTicket implements Ticket {
     private readonly ref: WeakRef<Caller>;
     private readonly callees: Callee[];
 
@@ -16,7 +17,7 @@ class Finalizer {
 
 ///////
 
-const registry = new FinalizationRegistry<Finalizer>((ticket) => ticket.burn());
+const registry = new FinalizationRegistry<Ticket>((ticket) => ticket.burn());
 
 ///////
 
@@ -28,19 +29,20 @@ export class Caller extends Callee {
         super();
         registry.register(
             this.ref,
-            new Finalizer(this.ref, this.callees),
+            new FinalizerTicket(this.ref, this.callees),
         );
     }
 
     protected apply(fn: () => void): void {
-        this.clear();
         const callees = new Set<Callee>();
         _context.push(callees);
         try {
             fn();
             callees.forEach((callee) => {
-                callee._callers.add(this.ref);
-                this.callees.push(callee);
+                if (!callee._callers.has(this.ref)) {
+                    callee._callers.add(this.ref);
+                    this.callees.push(callee);
+                }
             });
         } finally {
             _context.pop();

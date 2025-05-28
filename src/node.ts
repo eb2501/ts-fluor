@@ -1,13 +1,14 @@
 import { Caller } from "./caller";
 import { Clear } from "./clear";
-import { Notifier, Ticket } from "./notifier";
+import { Listener, Notifier, Source } from "./event";
 import { Read } from "./read";
+import { Ticket } from "./ticket";
 
 
-type NodeEvent = "cache" | "clear";
+export type NodeEvent = "cache" | "clear";
 
 
-export class Node<T> extends Caller implements Read<T>, Clear {
+export class Node<T> extends Caller implements Read<T>, Source<NodeEvent> {
     private readonly notifier = new Notifier<NodeEvent>()
     private readonly getter: () => T;
     private cached: boolean = false;
@@ -25,7 +26,7 @@ export class Node<T> extends Caller implements Read<T>, Clear {
                 this.value = this.getter();
                 this.cached = true;
             });
-            this.notifier.dispatch("cache");
+            this.notifier.notify("cache");
         }
         return this.value as T;
     }
@@ -34,10 +35,10 @@ export class Node<T> extends Caller implements Read<T>, Clear {
         this.cached = false;
         this.value = null;
         super.clear();
-        this.notifier.dispatch("clear");
+        this.notifier.notify("clear");
     }
 
-    register(listener: (event: NodeEvent) => void): Ticket {
-        return this.notifier.register(listener);
+    add(listener: Listener<NodeEvent>): Ticket {
+        return this.notifier.add(listener);
     }
 }

@@ -6,15 +6,21 @@ describe("Page Tests", () => {
             readonly x = this.cell(42);
         }
         
-        const xEvents: string[] = [];
-
         const page = new TestPage();
+        const events: string[] = [];
+        page.x.add((e) => events.push(e));
         
         expect(page.x.get()).toBe(42);
+        expect(events).toEqual([]);
+
         page.x.set(100);
         expect(page.x.get()).toBe(100);
+        expect(events).toEqual(["set"]);
+        events.length = 0; // Clear events
+
         page.x.clear();
         expect(page.x.get()).toBe(42);
+        expect(events).toEqual(["clear"]);
     });
 
     it("nodes should behave like regular functions", () => {
@@ -24,11 +30,28 @@ describe("Page Tests", () => {
         }
 
         const page = new TestPage();
+        const events: string[] = [];
+        page.y.add((e) => events.push(e));
+
         expect(page.y.get()).toBe(43);
+        expect(events).toEqual(['cache']);
+        events.length = 0; // Clear events
+
         page.x.set(100);
+        expect(events).toEqual(['clear']);
+        events.length = 0; // Clear events
+
         expect(page.y.get()).toBe(101);
+        expect(events).toEqual(['cache']);
+        events.length = 0; // Clear events
+
         page.x.clear();
+        expect(events).toEqual(['clear']);
+        events.length = 0; // Clear events
+
         expect(page.y.get()).toBe(43);
+        expect(events).toEqual(['cache']);
+        events.length = 0; // Clear events
     });
 
     it("nodes should be sensitive to all the cells they depend on", () => {
