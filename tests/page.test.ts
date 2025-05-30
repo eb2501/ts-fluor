@@ -7,13 +7,31 @@ describe("Page Tests", () => {
         }
         
         const page = new TestPage();
-        const events: string[] = [];
-        page.x.add((e) => events.push(e));
         
         expect(page.x.get()).toBe(42);
-        expect(events).toEqual([]);
 
         page.x.set(100);
+        expect(page.x.get()).toBe(100);
+
+        page.x.clear();
+        expect(page.x.get()).toBe(42);
+    });
+
+    it("cells can be listened to", () => {
+        class TestPage extends Page {
+            readonly x = this.cell(42);
+        }
+        
+        const page = new TestPage();
+        const events: string[] = [];
+        page.x.addListener((e) => events.push(e));
+        
+        expect(page.x.get()).toBe(42);
+        expect(events).toEqual(["cache"]);
+        events.length = 0; // Clear events
+
+        page.x.set(100);
+        expect(events).toEqual(["clear"]);
         expect(page.x.get()).toBe(100);
         expect(events).toEqual(["set"]);
         events.length = 0; // Clear events
@@ -26,12 +44,12 @@ describe("Page Tests", () => {
     it("nodes should behave like regular functions", () => {
         class TestPage extends Page {
             readonly x = this.cell(42);
-            readonly y = this.node(() => this.x.get() + 1);
+            readonly y = this.cache(() => this.x.get() + 1);
         }
 
         const page = new TestPage();
         const events: string[] = [];
-        page.y.add((e) => events.push(e));
+        page.y.addListener((e) => events.push(e));
 
         expect(page.y.get()).toBe(43);
         expect(events).toEqual(['cache']);
@@ -58,7 +76,7 @@ describe("Page Tests", () => {
         class TestPage extends Page {
             readonly x = this.cell(42);
             readonly y = this.cell(1);
-            readonly z = this.node(() => this.x.get() + this.y.get());
+            readonly z = this.cache(() => this.x.get() + this.y.get());
         }
 
         const page = new TestPage();
@@ -76,8 +94,8 @@ describe("Page Tests", () => {
     it("nodes chains behaves transparently", () => {
         class TestPage extends Page {
             readonly x = this.cell(42);
-            readonly y = this.node(() => this.x.get() + 1);
-            readonly z = this.node(() => this.y.get() * 3);
+            readonly y = this.cache(() => this.x.get() + 1);
+            readonly z = this.cache(() => this.y.get() * 3);
         }
 
         const page = new TestPage();

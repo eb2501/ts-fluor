@@ -1,34 +1,22 @@
-import { Ticket } from "./ticket";
+export type EventListener<E> = (event: E) => void;
 
-export type Listener<E> = (event: E) => void;
-
-export interface Source<E> {
-    add(listener: Listener<E>): Ticket;
+export interface EventDispatcher<E> {
+    addListener(listener: EventListener<E>): void;
+    removeListener(listener: EventListener<E>): void;
 }
 
-class NotifierTicket<E> implements Ticket {
-    private readonly registry: Notifier<E>;
-    private readonly listener: Listener<E>;
+export class EventManager<E> implements EventDispatcher<E> {
+    private readonly listeners: Map<EventListener<E>, number> = new Map();
 
-    constructor(registry: Notifier<E>, listener: Listener<E>) {
-        this.registry = registry;
-        this.listener = listener;
+    get empty(): boolean {
+        return this.listeners.size === 0;
     }
 
-    burn(): void {
-        this.registry._remove(this.listener);
-    }
-}
-
-export class Notifier<E> implements Source<E> {
-    private readonly listeners: Map<Listener<E>, number> = new Map();
-
-    add(listener: Listener<E>): Ticket {
+    addListener(listener: EventListener<E>): void {
         this.listeners.set(listener, (this.listeners.get(listener) || 0) + 1);
-        return new NotifierTicket(this, listener);
     }
 
-    _remove(listener: Listener<E>): void {
+    removeListener(listener: EventListener<E>): void {
         const count = this.listeners.get(listener);
         if (count === undefined) {
             throw new Error(`Listener not found in registry: ${listener}`);
