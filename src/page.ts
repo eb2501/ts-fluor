@@ -1,19 +1,16 @@
 import { Clear } from "./clear";
 import { Read } from "./read";
 import { Write } from "./write";
-import { EventDispatcher } from "./event";
-import { NodeEvent } from "./node";
 import { Node } from "./node";
 import { View } from "./view";
+import { State } from "./state";
 
 function isFunction<T>(value: T | (() => T)): value is () => T {
     return typeof value === "function";
 }
 
 export class Page {
-    protected cell<T>(
-        arg: T | (() => T)
-    ): Write<T> & Clear & EventDispatcher<NodeEvent> {
+    protected cell<T>(arg: T | (() => T)): Write<T> & Clear {
         if (isFunction(arg)) {
             return new Node(arg);
         } else {
@@ -21,9 +18,7 @@ export class Page {
         }
     }
 
-    protected cache<T>(
-        getFn: () => T
-    ): Read<T> & Clear & EventDispatcher<NodeEvent> {
+    protected calc<T>(getFn: () => T): Read<T> & Clear & State {
         return new Node(getFn);
     }
 

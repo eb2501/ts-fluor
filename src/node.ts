@@ -1,13 +1,9 @@
 import { Clear } from "./clear";
-import { EventListener, EventManager, EventDispatcher } from "./event";
 import { finalizer } from "./finalizer";
+import { State } from "./state";
 import { Ticket } from "./ticket";
 import { Write } from "./write";
 
-
-export type NodeEvent = "cache" | "clear";
-
-///
 
 type Caller = WeakRef<Clear>;
 
@@ -40,11 +36,10 @@ class NodeTicket implements Ticket {
 
 ///
 
-export class Node<T> implements Write<T>, Clear, EventDispatcher<NodeEvent>, Callee {
+export class Node<T> implements Write<T>, Clear, State, Callee {
     private readonly self: Caller = new WeakRef(this);
     private callers: Set<Caller> | null = null;
     private readonly callees: Callee[] = [];
-    private manager: EventManager<NodeEvent> | null = null;
     private readonly getFn: () => T;
     private value: T | null = null;
 
@@ -54,6 +49,10 @@ export class Node<T> implements Write<T>, Clear, EventDispatcher<NodeEvent>, Cal
             this.self,
             new NodeTicket(this.self, this.callees),
         );
+    }
+
+    get cached(): boolean {
+        return this.callers !== null;
     }
 
     get(): T {
@@ -71,9 +70,6 @@ export class Node<T> implements Write<T>, Clear, EventDispatcher<NodeEvent>, Cal
                     }
                 });
                 this.callers = new Set();
-                if (this.manager) {
-                    this.manager.notify("cache");
-                }
             } finally {
                 context = original;
             }
@@ -99,26 +95,6 @@ export class Node<T> implements Write<T>, Clear, EventDispatcher<NodeEvent>, Cal
             });
             this.callees.forEach((callee) => callee.removeCaller(this.self));
             this.callees.length = 0;
-            if (this.manager) {
-                this.manager.notify("clear");
-            }
-        }
-    }
-
-    addListener(listener: EventListener<NodeEvent>): void {
-        if (!this.manager) {
-            this.manager = new EventManager<NodeEvent>();
-        }
-        this.manager.addListener(listener);
-    }
-
-    removeListener(listener: EventListener<NodeEvent>): void {
-        if (!this.manager) {
-            throw new Error("No listeners registered");
-        }
-        this.manager.removeListener(listener);
-        if (this.manager.empty) {
-            this.manager = null;
         }
     }
 
