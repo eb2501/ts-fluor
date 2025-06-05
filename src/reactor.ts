@@ -1,7 +1,7 @@
 import invariant from "../node_modules/tiny-invariant/dist/tiny-invariant"
 import { Clear } from "./clear"
 import { finalizer } from "./finalizer"
-import { State, Listener } from "./cache"
+import { State, Listener } from "./state"
 import { Ticket } from "./ticket"
 import { Write } from "./write"
 import { isFunction } from "./utils"

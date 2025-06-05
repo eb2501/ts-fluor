@@ -502,6 +502,34 @@ describe("Views", () => {
     })
 })
 
+describe("Quick", () => {
+    it("Can be easier to read a cache using the call notation", () => {
+        class TestPage extends Page {
+            readonly x = this.cell(42)
+            readonly y = this.cell(() => this.x() + 1)
+            readonly z = this.node(() => this.x() * this.y())
+        }
+        
+        const page = new TestPage()
+
+        expect(page.x()).toBe(page.x.get())
+        expect(page.y()).toBe(page.y.get())
+        expect(page.z()).toBe(page.z.get())
+    })
+
+    it("Can be easier to read views using the call notation", () => {
+        class TestPage extends Page {
+            readonly x = this.cell(42)
+            readonly y = this.view(
+                () => this.x() + 1,
+            )
+        }
+
+        const page = new TestPage()
+        expect(page.y()).toBe(page.y.get())
+    })
+})
+
 describe("Use Cases", () => {
     it("Indirection should work as expected", () => {
         class Test1Page extends Page {
