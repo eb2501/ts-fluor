@@ -3,18 +3,14 @@ import { Read } from "./read"
 import { Write } from "./write"
 import { Reactor } from "./reactor"
 import { View } from "./view"
-import { Graph } from "./graph"
-
-function isFunction<T>(value: T | (() => T)): value is () => T {
-    return typeof value === "function"
-}
+import { State } from "./cache"
 
 export class Page {
-    protected cell<T>(source: T | (() => T)): Write<T> & Clear & Graph {
+    protected cell<T>(source: T | (() => T)): Write<T> & Clear & State {
         return new Reactor(source)
     }
 
-    protected calc<T>(getFn: () => T): Read<T> & Clear & Graph {
+    protected node<T>(getFn: () => T): Read<T> & Clear & State {
         return new Reactor(getFn)
     }
 

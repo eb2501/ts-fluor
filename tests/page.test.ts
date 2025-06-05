@@ -1,8 +1,8 @@
-import { GraphState } from "../src/graph"
+import { getCurrentMode, Mode } from "../src/mode"
 import { Page } from "../src/page"
 
-describe("Cells", () => {
-    it("Static ones should behave like read/write properties", () => {
+describe("Cell", () => {
+    it("statically should behave like read/write properties", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
         }
@@ -21,7 +21,7 @@ describe("Cells", () => {
         expect(page.x.get()).toBe(42)
     })
 
-    it("Dynamic ones should behave like read/write properties", () => {
+    it("dynamically should behave like cached read/write properties", () => {
         let t = 12
 
         class TestPage extends Page {
@@ -33,8 +33,8 @@ describe("Cells", () => {
         // Initially we need to evaluate the function to get the value
         expect(page.x.get()).toBe(13)
 
-        // If we change the value of t, the cell should not be affected as the value is cached
-        // already
+        // If we change the value of t, the cell should not be affected as the value
+        // is cached already
         t = 20
         expect(page.x.get()).toBe(13)
 
@@ -42,39 +42,62 @@ describe("Cells", () => {
         page.x.set(100)
         expect(page.x.get()).toBe(100)
 
-        // If we clear the value however, the new value in t is picked up once we evaluate
-        // the cell again
+        // If we clear the value however, the new value in t is picked up once we
+        // evaluate the cell again
         page.x.clear()
         expect(page.x.get()).toBe(21)
-    })
-})
 
-describe("Calcs", () => {
-    it("Should behave like regular functions", () => {
+        // We can also set the cell directly from a clear state
+        page.x.set(202)
+        expect(page.x.get()).toBe(202)
+    })
+
+    it("can refer to other cells multiple times", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
-            readonly y = this.calc(() => this.x.get() + 1)
+            readonly y = this.cell(() => this.x.get() * (this.x.get() + 1))
         }
 
         const page = new TestPage()
 
-        // The value should be the same as a regular method call
-        expect(page.y.get()).toBe(43)
+        // The value should be as expected
+        expect(page.y.get()).toBe(42 * 43)
 
-        // Setting the value of x should update the value of y
+        // Changing x would have the expected impact on y
         page.x.set(100)
-        expect(page.y.get()).toBe(101)
+        expect(page.y.get()).toBe(100 * 101)
+    })
+})
 
-        // Clearing the value of x should impact y too
+describe("Nodes", () => {
+    it("Should behave like dynamic cells, except read-only", () => {
+        let t = 12
+
+        class TestPage extends Page {
+            readonly x = this.node(() => t + 1)
+        }
+        
+        const page = new TestPage()
+        
+        // Initially we need to evaluate the function to get the value
+        expect(page.x.get()).toBe(13)
+
+        // If we change the value of t, the cell should not be affected as the value
+        // is cached already
+        t = 20
+        expect(page.x.get()).toBe(13)
+
+        // If we clear the value however, the new value in t is picked up once we
+        // evaluate the cell again
         page.x.clear()
-        expect(page.y.get()).toBe(43)
+        expect(page.x.get()).toBe(21)
     })
 
-    it("Should be sensitive to all the cells they depend on (and only those)", () => {
+    it("Should be sensitive to all the caches they depend on (and only those)", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
             readonly y = this.cell(1)
-            readonly z = this.calc(() => this.x.get() + this.y.get())
+            readonly z = this.node(() => this.x.get() + this.y.get())
             readonly t = this.cell(23)
         }
 
@@ -103,8 +126,8 @@ describe("Calcs", () => {
     it("Chains behaves transparently", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
-            readonly y = this.calc(() => this.x.get() + 1)
-            readonly z = this.calc(() => this.y.get() * 3)
+            readonly y = this.node(() => this.x.get() + 1)
+            readonly z = this.node(() => this.y.get() * 3)
         }
 
         const page = new TestPage()
@@ -126,7 +149,7 @@ describe("Calcs", () => {
             readonly flag = this.cell(true)
             readonly x = this.cell(42)
             readonly y = this.cell(12)
-            readonly z = this.calc(
+            readonly z = this.node(
                 () => this.flag.get() ? this.x.get() + this.y.get() : this.x.get() + 1
             )
         }
@@ -166,36 +189,112 @@ describe("Calcs", () => {
     })
 })
 
+describe("Mode", () => {
+    it("Within a get, we're in read mode", () => {
+        let mode: Mode | null = null
+        
+        class TestPage extends Page {
+            readonly x = this.cell(() => {
+                mode = getCurrentMode()
+                return 42
+            })
+            readonly y = this.cell(() => {
+                this.x.set(199)
+                return 12
+            })
+            readonly z = this.cell(() => {
+                this.x.clear()
+                return 24
+            })
+        }
+
+        const page = new TestPage()
+
+        // Getting the value should put us in read mode
+        page.x.get()
+        expect(mode).toBe("read")
+
+        // After, we should be back to free mode
+        expect(getCurrentMode()).toBe("free")
+
+        // Setting a value is forbidden in read mode
+        expect(() => page.y.get()).toThrow()
+
+        // Clearing a value is also forbidden in read mode
+        expect(() => page.z.get()).toThrow()
+    })
+
+    it("Within a listener, we're in locked mode and we cannot interact with the graph", () => {
+        class TestPage extends Page {
+            readonly x = this.cell(() => 32)
+            readonly y = this.cell(48)
+        }
+
+        const page = new TestPage()
+
+        let mode: Mode | null = null
+        let aFlag = false
+        let bFlag = false
+        let cFlag = false
+
+        page.x.addListener((loaded) => {
+            mode = getCurrentMode()
+
+            try {
+                page.y.get()
+            } catch (error) {
+                aFlag = true
+            }
+
+            try {
+                page.y.set(100)
+            } catch (error) {
+                bFlag = true
+            }
+
+            try {
+                page.y.clear()
+            } catch (error) {
+                cFlag = true
+            }
+        })
+        page.x.get()
+
+        expect(mode).toBe("locked")
+        expect(aFlag).toBe(true)
+        expect(bFlag).toBe(true)
+        expect(cFlag).toBe(true)
+    })
+})
+
 describe("Graph", () => {
-    it("Static cells can have their state inspected", () => {
+    it("Static cells are always cached", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
         }
         
         const page = new TestPage()
-        const events: [GraphState, GraphState][] = []
-        page.x.addListener((before, after) => events.push([before, after]))
+        const events: boolean[] = []
+        page.x.addListener((cached) => events.push(cached))
 
         // Initially the cell already cached
-        expect(page.x.state).toBe("cached")
+        expect(page.x.isLoaded).toBe(true)
 
         // Getting the value is a no-op
         page.x.get()
-        expect(page.x.state).toBe("cached")
+        expect(page.x.isLoaded).toBe(true)
         expect(events).toEqual([])
 
         // Upon setting a new value the cell is first invalidated and then
         // updated, but its state is still "cached"
         page.x.set(100)
-        expect(page.x.state).toBe("cached")
+        expect(page.x.isLoaded).toBe(true)
         expect(events).toEqual([])
-        events.length = 0
 
-        // Clearing the cell leave it in the "cached" state
+        // Clearing the cell leave it in the "cached" state again
         page.x.clear()
-        expect(page.x.state).toBe("cached")
+        expect(page.x.isLoaded).toBe(true)
         expect(events).toEqual([])
-        events.length = 0
     })
 
     it("Dynamic cells can have their state inspected", () => {
@@ -204,72 +303,69 @@ describe("Graph", () => {
         }
         
         const page = new TestPage()
-        const events: [GraphState, GraphState][] = []
-        page.x.addListener((before, after) => events.push([before, after]))
+        const events: boolean[] = []
+        page.x.addListener((cached) => events.push(cached))
 
         // Initially the cell is not cached
-        expect(page.x.state).toBe("cleared")
+        expect(page.x.isLoaded).toBe(false)
 
-        // Getting the value causes the function to be evaluated (going into the "caching" state)
-        // before entering the "cached" state
+        // Getting the value causes the function to be evaluated, and upon returning
+        // the cell is put into the "cached" state
         page.x.get()
-        expect(page.x.state).toBe("cached")
-        expect(events).toEqual([
-            ["cleared", "caching"],
-            ["caching", "cached"]
-        ])
+        expect(page.x.isLoaded).toBe(true)
+        expect(events).toEqual([true])
         events.length = 0
 
         // Getting the value again doesn't change the state
         page.x.get()
-        expect(page.x.state).toBe("cached")
+        expect(page.x.isLoaded).toBe(true)
         expect(events).toEqual([])
 
-        // Upon setting a new value the cell is invalidated, and then set right after
+        // Upon setting a new value the cell is invalidated, but it stays cached
         page.x.set(100)
-        expect(page.x.state).toBe("cached")
+        expect(page.x.isLoaded).toBe(true)
         expect(events).toEqual([])
-        events.length = 0
 
         // Clearing the cell have the expected state impact
         page.x.clear()
-        expect(page.x.state).toBe("cleared")
-        expect(events).toEqual([["cached", "cleared"]])
+        expect(page.x.isLoaded).toBe(false)
+        expect(events).toEqual([false])
         events.length = 0
+
+        // We can also set the cell directly from a clear state
+        page.x.set(202)
+        expect(page.x.isLoaded).toBe(true)
+        expect(events).toEqual([true])
     })
 
     it("Calcs can have their state inspected", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
-            readonly y = this.calc(() => this.x.get() + 1)
+            readonly y = this.node(() => this.x.get() + 1)
         }
 
         const page = new TestPage()
-        const events: [GraphState, GraphState][] = []
-        page.y.addListener((before, after) => events.push([before, after]))
+        const events: boolean[] = []
+        page.y.addListener((loaded) => events.push(loaded))
 
         // Initially the calc is in the "clear" state
-        expect(page.y.state).toBe("cleared")
+        expect(page.y.isLoaded).toBe(false)
 
-        // Getting the value involves the calc to be evaluated, which puts it into the "get" state
-        // before entering the "cache" state
+        // Getting the value involves the calc to be evaluated and then cached
         page.y.get()
-        expect(page.y.state).toBe("cached")
-        expect(events).toEqual([
-            ["cleared", "caching"],
-            ["caching", "cached"]
-        ])
+        expect(page.y.isLoaded).toBe(true)
+        expect(events).toEqual([true])
         events.length = 0
 
         // Getting the value again doesn't change the state
         page.y.get()
-        expect(page.y.state).toBe("cached")
+        expect(page.y.isLoaded).toBe(true)
         expect(events).toEqual([])
 
         // Clearing the calc puts it back into the "clear" state
         page.x.clear()
-        expect(page.y.state).toBe("cleared")
-        expect(events).toEqual([["cached", "cleared"]])
+        expect(page.y.isLoaded).toBe(false)
+        expect(events).toEqual([false])
         events.length = 0
     })
 
@@ -294,7 +390,7 @@ describe("Graph", () => {
         expect(page.x.get()).toBe(42)
         expect(aFlag).toBe(true)
         expect(bFlag).toBe(true)
-        expect(page.x.state).toBe("cached")
+        expect(page.x.isLoaded).toBe(true)
     })
 
     it("Listeners can be added and removed dynamically", () => {
@@ -306,7 +402,7 @@ describe("Graph", () => {
         let flag = false
 
         // Adding a listener shouldn't call it
-        const ticket = page.x.addListener(() => {
+        const ticket = page.x.addListener((_) => {
             flag = true
         })
         expect(flag).toBe(false)
@@ -314,20 +410,19 @@ describe("Graph", () => {
         // Getting x value should call the listener
         page.x.get()
         expect(flag).toBe(true)
-        flag = false
         page.x.clear()
+        flag = false
 
         // Removing the listener should prevent it from being called
         ticket.burn()
         page.x.get()
         expect(flag).toBe(false)
-        page.x.clear()
     })
     
     it("Listeners cannot do any operation on the graph", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
-            readonly y = this.calc(() => this.x.get() + 1)
+            readonly y = this.node(() => this.x.get() + 1)
             readonly z = this.cell(true)
         }
 
@@ -336,7 +431,7 @@ describe("Graph", () => {
         let flag = false
 
         // The listener should raise at the get, so flag shouldn't be set
-        const t1 = page.x.addListener(() => {
+        const t1 = page.x.addListener((_) => {
             page.z.get()
             flag = true
         })
@@ -346,7 +441,7 @@ describe("Graph", () => {
         page.x.clear()
 
         // The listener should raise at the set, so flag shouldn't be set
-        const t2 = page.x.addListener(() => {
+        const t2 = page.x.addListener((_) => {
             page.z.set(false)
             flag = true
         })
@@ -355,7 +450,7 @@ describe("Graph", () => {
         page.x.clear()
 
         // The listener should raise at the clear, so flag shouldn't be set
-        const t3 = page.x.addListener(() => {
+        const t3 = page.x.addListener((_) => {
             page.z.clear()
             flag = true
         })
@@ -363,16 +458,28 @@ describe("Graph", () => {
         t3.burn()
         page.x.clear()
     })
+
+    it("Listeners cannot be registered twice on the same target", () => {
+        class TestPage extends Page {
+            readonly x = this.cell(42)
+        }
+
+        const page = new TestPage()
+        const listener = () => {}
+        page.x.addListener(listener)
+        expect(() => page.x.addListener(listener)).toThrow()
+    })
 })
 
 describe("Views", () => {
     it("Should be completely transparent", () => {
         class TestPage extends Page {
-            readonly x = this.cell(42);
+            readonly x = this.cell(42)
             readonly y = this.view(
                 () => this.x.get() + 1,
-                (value) => this.x.set(value - 1)
-            );
+                (value) => this.x.set(value - 1),
+                () => this.x.clear()
+            )
         }
 
         const page = new TestPage();
@@ -388,6 +495,10 @@ describe("Views", () => {
         // Setting the source cell should also impact the view's result
         page.x.set(50)
         expect(page.y.get()).toBe(51)
+
+        // We can also clear the view
+        page.y.clear()
+        expect(page.x.get()).toBe(42)
     })
 })
 
@@ -395,12 +506,12 @@ describe("Use Cases", () => {
     it("Indirection should work as expected", () => {
         class Test1Page extends Page {
             readonly x = this.cell(42);
-            readonly y = this.calc(() => this.x.get() + 1);
+            readonly y = this.node(() => this.x.get() + 1);
         }
 
         class Test2Page extends Page {
             readonly o = this.cell<Test1Page | null>(null)
-            readonly z = this.calc(() => {
+            readonly z = this.node(() => {
                 const obj = this.o.get();
                 if (obj) {
                     return obj.y.get() * 2;
@@ -431,25 +542,5 @@ describe("Use Cases", () => {
         // Setting page1's x to a new value should update z again
         page1.x.set(50);
         expect(page2.z.get()).toBe(86);
-    });
-
-    it("a calc shouldn't get itself while doing a get", () => {
-        class TestPage extends Page {
-            readonly x = this.cell(42);
-            readonly y = this.calc((): number => {
-                if (this.x.get() < 50) {
-                    return this.x.get() + 1;
-                }
-                else {
-                    return this.y.get() - 1;
-                }
-            });
-        }
-
-        const page = new TestPage();
-        expect(page.y.get()).toBe(43);
-
-        page.x.set(100);
-        expect(() => page.y.get()).toThrow();
     });
 });

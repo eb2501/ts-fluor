@@ -1,3 +1,4 @@
+import invariant from "../node_modules/tiny-invariant/dist/tiny-invariant"
 import { Clear } from "./clear"
 import { Write } from "./write"
 
@@ -18,18 +19,12 @@ export class View<T> implements Write<T>, Clear {
     }
 
     set(value: T): void {
-        if (this.setFn) {
-            this.setFn(value)
-        } else {
-            throw new Error("Set function is not defined")
-        }
+        invariant(this.setFn !== undefined)
+        this.setFn(value)
     }
 
     clear(): void {
-        if (this.clearFn) {
-            this.clearFn()
-        } else {
-            throw new Error("Clear function is not defined")
-        }
+        invariant(this.clearFn !== undefined)
+        this.clearFn()
     }
 }

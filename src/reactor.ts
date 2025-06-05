@@ -1,37 +1,41 @@
 import invariant from "../node_modules/tiny-invariant/dist/tiny-invariant"
 import { Clear } from "./clear"
 import { finalizer } from "./finalizer"
-import { Graph, GraphListener, GraphState } from "./graph"
+import { State, Listener } from "./cache"
 import { Ticket } from "./ticket"
 import { Write } from "./write"
+import { isFunction } from "./utils"
+import { getCurrentMode, withMode } from "./mode"
 
 
-type ReactorCaller = WeakRef<Clear>
+type Caller = WeakRef<Clear>
 
 ///
 
-interface ReactorCallee {
-    addCaller(caller: ReactorCaller): boolean
-    removeCaller(caller: ReactorCaller): void
+interface Callee {
+    _addCaller(caller: Caller): void
+    _removeCaller(caller: Caller): void
 }
 
 ///
 
-let context: Set<ReactorCallee> | null = null
+let currentContext: Set<Callee> | null = null
 
 ///
 
 class ReactorTicket implements Ticket {
-    private readonly caller: ReactorCaller
-    private readonly callees: ReactorCallee[]
+    private readonly caller: Caller
+    private readonly callees: Callee[]
 
-    constructor(caller: ReactorCaller, callees: ReactorCallee[]) {
+    constructor(caller: Caller, callees: Callee[]) {
         this.caller = caller
         this.callees = callees
     }
 
     burn(): void {
-        this.callees.forEach((callee) => callee.removeCaller(this.caller))
+        this.callees.forEach((callee) =>
+            callee._removeCaller(this.caller)
+        )
     }
 }
 
@@ -39,47 +43,36 @@ class ReactorTicket implements Ticket {
 
 class ListenerTicket<T> implements Ticket {
     private readonly reactor: Reactor<T>
-    private readonly listener: GraphListener
+    private readonly listener: Listener
 
-    constructor(reactor: Reactor<T>, listener: GraphListener) {
+    constructor(reactor: Reactor<T>, listener: Listener) {
         this.reactor = reactor
         this.listener = listener
     }
 
     burn(): void {
-        this.reactor.removeListener(this.listener)
+        this.reactor._removeListener(this.listener)
     }
 }
 
 ///
 
-function isFunction<T>(value: T | (() => T)): value is () => T {
-    return typeof value === "function"
-}
-
-///
-
-let freeze = false
-
-///
-
-export class Reactor<T> implements Write<T>, Clear, Graph, ReactorCallee {
-    private readonly self: ReactorCaller = new WeakRef(this)
-    private readonly callees: ReactorCallee[] = []
+export class Reactor<T> implements Write<T>, Clear, State, Callee {
+    private readonly self: Caller = new WeakRef(this)
+    private readonly callees: Callee[] = []
     private readonly source: T | (() => T)
-    private callers: Set<ReactorCaller> | null = null
-    private _state: GraphState
-    private value: T | null = null
-    private listeners: Set<GraphListener> | null = null
+    private callers: Set<Caller> | null
+    private value: T | null
+    private listeners: Set<Listener> | null = null
 
     constructor(source: T | (() => T)) {
         this.source = source
         if (isFunction(source)) {
-            this._state = "cleared"
+            this.value = null
+            this.callers = null
         } else {
             this.value = source
             this.callers = new Set()
-            this._state = "cached"
         }
         finalizer.register(
             this.self,
@@ -87,21 +80,17 @@ export class Reactor<T> implements Write<T>, Clear, Graph, ReactorCallee {
         )
     }
 
-    private changeState(state: GraphState): void {
-        const before = this._state
-        this._state = state
-        if (this.listeners) {
-            invariant(!freeze)
-            freeze = true
-            this.listeners.forEach((listener) => {
+    private notify(): void {
+        invariant(getCurrentMode() !== "locked")
+        withMode("locked", () => {
+            this.listeners?.forEach((listener) => {
                 try {
-                    listener(before, state)
+                    listener(this.callers !== null)
                 } catch (error) {
                     console.error("Error in listener:", error)
                 }
             })
-            freeze = false
-        }
+        })
     }
 
     //
@@ -109,42 +98,28 @@ export class Reactor<T> implements Write<T>, Clear, Graph, ReactorCallee {
     //
 
     get(): T {
-        if (freeze) {
-            throw new Error("Cannot get while executing a listener")
-        }
-        switch (this._state) {
-            case "caching":
-                throw new Error("Cannot get while doing a get")
-
-            case "cleared":
-                if (isFunction(this.source)) {
-                    const previousContext = context
-                    context = new Set<ReactorCallee>()
-                    this.changeState("caching")
-                    try {
-                        this.value = this.source();
-                    } catch (error) {
-                        context = previousContext;
-                        this.changeState("cleared")
-                        throw error
-                    }
-                    context.forEach((callee) => {
-                        if (callee.addCaller(this.self)) {
-                            this.callees.push(callee)
-                        }
+        return withMode("read", () => {
+            if (this.callers === null) {
+                invariant(isFunction(this.source))
+                const previousContext = currentContext
+                currentContext = new Set<Callee>()
+                try {
+                    this.value = this.source();
+                    currentContext.forEach((callee) => {
+                        callee._addCaller(this.self)
+                        this.callees.push(callee)
                     });
-                    context = previousContext
-                } else {
-                    this.value = this.source
+                } finally {
+                    currentContext = previousContext;
                 }
                 this.callers = new Set()
-                this.changeState("cached")
-                break;
-        }
-        if (context) {
-            context.add(this)
-        }
-        return this.value as T;
+                this.notify()
+            }
+            if (currentContext) {
+                currentContext.add(this)
+            }
+            return this.value as T
+        })
     }
 
     private invalidate(): void {
@@ -157,63 +132,50 @@ export class Reactor<T> implements Write<T>, Clear, Graph, ReactorCallee {
                 caller.clear()
             }
         })
-        this.callees.forEach((callee) => callee.removeCaller(this.self))
+        this.callees.forEach((callee) => callee._removeCaller(this.self))
         this.callees.length = 0
         this.value = null
     }
 
     set(value: T): void {
-        if (freeze) {
-            throw new Error("Cannot set while executing a listener")
-        }
-        switch (this._state) {
-            case "cached":
-                invariant(this.callers !== null)
+        withMode("free", () => {
+            if (this.callers === null) {
+                this.value = value
+                this.callers = new Set()
+                this.notify()
+            } else {
                 this.invalidate()
                 this.value = value
                 this.callers = new Set()
-                break
-
-            case "caching":
-                throw new Error("Cannot set while doing a get")
-
-            case "cleared":
-                this.value = value
-                this.callers = new Set()
-                this.changeState("cached")
-                break
-        }
+            }
+        })
     }
 
     clear(): void {
-        if (freeze) {
-            throw new Error("Cannot clear while executing a listener")
-        }
-        switch (this._state) {
-            case "cached":
+        withMode("free", () => {
+            if (this.callers !== null) {
                 this.invalidate()
                 if (isFunction(this.source)) {
-                    this.changeState("cleared")
+                    this.value = null
+                    this.callers = null
+                    this.notify()
                 } else {
                     this.value = this.source
                     this.callers = new Set()
                 }
-                break
-            
-            case "caching":
-                throw new Error("Cannot clear while doing a get")
-        }
+            }
+        })
     }
 
     //
-    // Graph
+    // State
     //
 
-    get state(): GraphState {
-        return this._state
+    get isLoaded(): boolean {
+        return this.callers !== null
     }
 
-    addListener(listener: GraphListener): Ticket {
+    addListener(listener: Listener): Ticket {
         if (this.listeners === null) {
             this.listeners = new Set()
         }
@@ -224,13 +186,8 @@ export class Reactor<T> implements Write<T>, Clear, Graph, ReactorCallee {
         return new ListenerTicket(this, listener)
     }
 
-    removeListener(listener: GraphListener): void {
-        if (this.listeners === null) {
-            throw new Error("Listener is unknown")
-        }
-        if (!this.listeners.has(listener)) {
-            throw new Error("Listener is unknown")
-        }
+    _removeListener(listener: Listener): void {
+        invariant((this.listeners !== null) && (this.listeners.has(listener)))
         this.listeners.delete(listener)
         if (this.listeners.size === 0) {
             this.listeners = null
@@ -238,20 +195,15 @@ export class Reactor<T> implements Write<T>, Clear, Graph, ReactorCallee {
     }
 
     //
-    // ReactorCallee
+    // Callee
     //
 
-    addCaller(caller: ReactorCaller): boolean {
-        invariant(this.callers !== null)
-        if (!this.callers.has(caller)) {
-            this.callers.add(caller)
-            return true
-        } else {
-            return false
-        }
+    _addCaller(caller: Caller): void {
+        invariant((this.callers !== null) && (!this.callers.has(caller)))
+        this.callers.add(caller)
     }
 
-    removeCaller(caller: ReactorCaller): void {
+    _removeCaller(caller: Caller): void {
         if (this.callers !== null) {
             this.callers.delete(caller)
         }
