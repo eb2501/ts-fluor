@@ -1,9 +1,9 @@
-import invariant from "../node_modules/tiny-invariant/dist/tiny-invariant"
-import { Clear } from "./clear"
+import invariant from "tiny-invariant"
+import { type Clear } from "./clear"
 import { finalizer } from "./finalizer"
-import { State, Listener } from "./state"
-import { Ticket } from "./ticket"
-import { Write } from "./write"
+import { type Cache, type Listener } from "./cache"
+import { type Ticket } from "./ticket"
+import { type Write } from "./write"
 import { isFunction } from "./utils"
 import { getCurrentMode, withMode } from "./mode"
 
@@ -41,23 +41,7 @@ class ReactorTicket implements Ticket {
 
 ///
 
-class ListenerTicket<T> implements Ticket {
-    private readonly reactor: Reactor<T>
-    private readonly listener: Listener
-
-    constructor(reactor: Reactor<T>, listener: Listener) {
-        this.reactor = reactor
-        this.listener = listener
-    }
-
-    burn(): void {
-        this.reactor._removeListener(this.listener)
-    }
-}
-
-///
-
-export class Reactor<T> implements Write<T>, Clear, State, Callee {
+export class Reactor<T> implements Write<T>, Clear, Cache, Callee {
     private readonly self: Caller = new WeakRef(this)
     private readonly callees: Callee[] = []
     private readonly source: T | (() => T)
@@ -171,11 +155,11 @@ export class Reactor<T> implements Write<T>, Clear, State, Callee {
     // State
     //
 
-    get isLoaded(): boolean {
+    get isCached(): boolean {
         return this.callers !== null
     }
 
-    addListener(listener: Listener): Ticket {
+    addListener(listener: Listener): void {
         if (this.listeners === null) {
             this.listeners = new Set()
         }
@@ -183,11 +167,12 @@ export class Reactor<T> implements Write<T>, Clear, State, Callee {
             throw new Error("Listener already added")
         }
         this.listeners.add(listener)
-        return new ListenerTicket(this, listener)
     }
 
-    _removeListener(listener: Listener): void {
-        invariant((this.listeners !== null) && (this.listeners.has(listener)))
+    removeListener(listener: Listener): void {
+        if ((this.listeners === null) || (!this.listeners.has(listener))) {
+            throw new Error("Listener not found")
+        }
         this.listeners.delete(listener)
         if (this.listeners.size === 0) {
             this.listeners = null

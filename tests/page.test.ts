@@ -1,5 +1,6 @@
-import { getCurrentMode, Mode } from "../src/mode"
-import { Page } from "../src/page"
+import { describe, expect, it } from "vitest"
+import { getCurrentMode, Mode } from "../src/core/mode"
+import { Page } from "../src/core/page"
 
 describe("Cell", () => {
     it("statically should behave like read/write properties", () => {
@@ -278,22 +279,22 @@ describe("Graph", () => {
         page.x.addListener((cached) => events.push(cached))
 
         // Initially the cell already cached
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
 
         // Getting the value is a no-op
         page.x.get()
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
         expect(events).toEqual([])
 
         // Upon setting a new value the cell is first invalidated and then
         // updated, but its state is still "cached"
         page.x.set(100)
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
         expect(events).toEqual([])
 
         // Clearing the cell leave it in the "cached" state again
         page.x.clear()
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
         expect(events).toEqual([])
     })
 
@@ -307,34 +308,34 @@ describe("Graph", () => {
         page.x.addListener((cached) => events.push(cached))
 
         // Initially the cell is not cached
-        expect(page.x.isLoaded).toBe(false)
+        expect(page.x.isCached).toBe(false)
 
         // Getting the value causes the function to be evaluated, and upon returning
         // the cell is put into the "cached" state
         page.x.get()
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
         expect(events).toEqual([true])
         events.length = 0
 
         // Getting the value again doesn't change the state
         page.x.get()
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
         expect(events).toEqual([])
 
         // Upon setting a new value the cell is invalidated, but it stays cached
         page.x.set(100)
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
         expect(events).toEqual([])
 
         // Clearing the cell have the expected state impact
         page.x.clear()
-        expect(page.x.isLoaded).toBe(false)
+        expect(page.x.isCached).toBe(false)
         expect(events).toEqual([false])
         events.length = 0
 
         // We can also set the cell directly from a clear state
         page.x.set(202)
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
         expect(events).toEqual([true])
     })
 
@@ -349,22 +350,22 @@ describe("Graph", () => {
         page.y.addListener((loaded) => events.push(loaded))
 
         // Initially the calc is in the "clear" state
-        expect(page.y.isLoaded).toBe(false)
+        expect(page.y.isCached).toBe(false)
 
         // Getting the value involves the calc to be evaluated and then cached
         page.y.get()
-        expect(page.y.isLoaded).toBe(true)
+        expect(page.y.isCached).toBe(true)
         expect(events).toEqual([true])
         events.length = 0
 
         // Getting the value again doesn't change the state
         page.y.get()
-        expect(page.y.isLoaded).toBe(true)
+        expect(page.y.isCached).toBe(true)
         expect(events).toEqual([])
 
         // Clearing the calc puts it back into the "clear" state
         page.x.clear()
-        expect(page.y.isLoaded).toBe(false)
+        expect(page.y.isCached).toBe(false)
         expect(events).toEqual([false])
         events.length = 0
     })
@@ -390,7 +391,7 @@ describe("Graph", () => {
         expect(page.x.get()).toBe(42)
         expect(aFlag).toBe(true)
         expect(bFlag).toBe(true)
-        expect(page.x.isLoaded).toBe(true)
+        expect(page.x.isCached).toBe(true)
     })
 
     it("Listeners can be added and removed dynamically", () => {
@@ -399,12 +400,14 @@ describe("Graph", () => {
         }
 
         const page = new TestPage()
+
         let flag = false
+        const listener = (cached: boolean) => {
+            flag = true
+        }
 
         // Adding a listener shouldn't call it
-        const ticket = page.x.addListener((_) => {
-            flag = true
-        })
+        page.x.addListener(listener)
         expect(flag).toBe(false)
 
         // Getting x value should call the listener
@@ -414,7 +417,7 @@ describe("Graph", () => {
         flag = false
 
         // Removing the listener should prevent it from being called
-        ticket.burn()
+        page.x.removeListener(listener)
         page.x.get()
         expect(flag).toBe(false)
     })
@@ -431,31 +434,33 @@ describe("Graph", () => {
         let flag = false
 
         // The listener should raise at the get, so flag shouldn't be set
-        const t1 = page.x.addListener((_) => {
-            page.z.get()
+        const l1 = (cached: boolean) => {
             flag = true
-        })
+        }
+        page.x.addListener(l1)
         page.x.get()
         expect(flag).toBe(false)
-        t1.burn()
+        page.x.removeListener(l1)
         page.x.clear()
 
         // The listener should raise at the set, so flag shouldn't be set
-        const t2 = page.x.addListener((_) => {
+        const l2 = (cached: boolean) => {
             page.z.set(false)
             flag = true
-        })
+        }
+        page.x.addListener(l2)
         expect(flag).toBe(false)
-        t2.burn()
+        page.x.removeListener(l2)
         page.x.clear()
 
         // The listener should raise at the clear, so flag shouldn't be set
-        const t3 = page.x.addListener((_) => {
+        const l3 = (cached: boolean) => {
             page.z.clear()
             flag = true
-        })
+        }
+        page.x.addListener(l3)
         expect(flag).toBe(false)
-        t3.burn()
+        page.x.removeListener(l3)
         page.x.clear()
     })
 
@@ -475,7 +480,7 @@ describe("Views", () => {
     it("Should be completely transparent", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
-            readonly y = this.view(
+            readonly y = this.proxy(
                 () => this.x.get() + 1,
                 (value) => this.x.set(value - 1),
                 () => this.x.clear()
@@ -520,7 +525,7 @@ describe("Quick", () => {
     it("Can be easier to read views using the call notation", () => {
         class TestPage extends Page {
             readonly x = this.cell(42)
-            readonly y = this.view(
+            readonly y = this.proxy(
                 () => this.x() + 1,
             )
         }

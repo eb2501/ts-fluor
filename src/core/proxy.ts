@@ -1,9 +1,9 @@
-import invariant from "../node_modules/tiny-invariant/dist/tiny-invariant"
-import { Clear } from "./clear"
-import { Write } from "./write"
+import invariant from "tiny-invariant"
+import { type Clear } from "./clear"
+import { type Write } from "./write"
 
 
-export class View<T> implements Write<T>, Clear {
+export class Proxy<T> implements Write<T>, Clear {
     private readonly getFn: () => T
     private readonly setFn?: (value: T) => void
     private readonly clearFn?: () => void

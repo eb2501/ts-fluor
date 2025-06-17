@@ -1,5 +1,5 @@
 
-import { Read, Read1, Read2 } from './read'
+import { type Read, type Read1, type Read2 } from './read'
 
 export interface Write<T> extends Read<T> {
     set(value: T): void

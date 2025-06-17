@@ -1,4 +1,4 @@
-import { Ticket } from "./ticket"
+import { type Ticket } from "./ticket"
 
 export const finalizer = new FinalizationRegistry<Ticket>(
     (ticket) => ticket.burn()
