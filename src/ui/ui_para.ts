@@ -1,72 +1,65 @@
-import { Page, type CellC } from "../core/page"
+import { Page, type Cell, type Node } from "../core/page"
 import { UIView } from "./ui_view"
-import { DomTree } from "./dom_tree"
+import { DomElement } from "./dom_element"
+import type { Size } from "./common"
 
-export type UITextSize =
-    | "xs"
-    | "sm"
-    | "base"
-    | "lg"
-    | "xl"
-    | "2xl"
-    | "3xl"
-    | "4xl"
-    | "5xl"
-    | "6xl"
-    | "7xl"
-    | "8xl"
-    | "9xl"
 
-function renderTextSize(size: UITextSize): string {
-    switch (size) {
-        case "xs": return "text-xs"
-        case "sm": return "text-sm"
-        case "base": return "text-base"
-        case "lg": return "text-lg"
-        case "xl": return "text-xl"
-        case "2xl": return "text-2xl"
-        case "3xl": return "text-3xl"
-        case "4xl": return "text-4xl"
-        case "5xl": return "text-5xl"
-        case "6xl": return "text-6xl"
-        case "7xl": return "text-7xl"
-        case "8xl": return "text-8xl"
-        case "9xl": return "text-9xl"
-        default:
-            throw new Error(`Unknown text size: ${size}`)
-    }
+export abstract class UIParaModel extends Page {
+    abstract readonly text: Node<string>
+    abstract readonly size: Node<Size | null>
 }
 
-export interface UIParaModel {
-    text(): string
-    size(): UITextSize
-}
 
-export class UIParaState extends Page implements UIParaModel {
-    readonly text: CellC<string>
-    readonly size: CellC<UITextSize>
-
-    constructor(text: string = "", size: UITextSize = "base") {
+export class UIParaFreeModel extends UIParaModel {
+    readonly text: Cell<string>
+    readonly size: Cell<Size | null>
+    
+    constructor(text: string = "", size: Size | null = null) {
         super()
         this.text = this.cell(text)
         this.size = this.cell(size)
     }
 }
 
+
 export class UIPara<M extends UIParaModel> extends UIView<M> {
-    readonly tree = this.node(() => 
-        new DomTree(
+    readonly model: Cell<M | null>
+
+    readonly dom = this.node(() => {
+        const styles: string[] = []
+        const children: string[] = []
+        const model = this.model()
+        if (model) {
+            const size = model.size()
+            if (size) {
+                styles.push("font-size", size)
+            }
+            children.push(model.text())
+        }
+        return new DomElement(
+            this.id,
             "p",
-            [
-                "class", renderTextSize(this.model().size())
-            ],
-            [
-                this.model().text()
-            ]
+            ["fluor-para"],
+            null,
+            null,
+            styles,
+            null,
+            null,
+            children
         )
-    )
+    })
+
+    constructor(model: M | null = null) {
+        super()
+        this.model = this.cell(model)
+    }
+
+    collect(doms: DomElement[]): void {
+        doms.push(this.dom())
+    }
 }
 
-export function para(text: string = "", size: UITextSize = "base"): UIPara<UIParaState> {
-    return new UIPara(new UIParaState(text, size))
+
+export function para(text: string = "", size: Size | null = null): UIPara<UIParaFreeModel> {
+    return new UIPara<UIParaFreeModel>(new UIParaFreeModel(text, size))
 }

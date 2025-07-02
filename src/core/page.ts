@@ -6,14 +6,10 @@ import { Proxy } from "./proxy"
 import { type Listener, type Cache } from "./cache"
 import { type Quick } from "./quick"
 
-export type ReadQ<T> = Read<T> & Quick<T>
-export type WriteQ<T> = Write<T> & Quick<T>
-export type NodeP<T> = ReadQ<T> & Clear
-export type CellP<T> = WriteQ<T> & Clear
-export type CellC<T> = CellP<T> & Cache
-export type NodeC<T> = NodeP<T> & Cache
 
-///
+export type Node<T> = Read<T> & Quick<T>
+export type Cell<T> = Write<T> & Quick<T>
+
 
 interface Carrier<T> extends Quick<T> {
     readonly _reactor: Reactor<T>
@@ -47,7 +43,7 @@ const carrierRemoveListener = function <T>(this: Carrier<T>, listener: Listener)
 
 ///
 
-function cell<T>(source: T | (() => T)): CellC<T> {
+function cell<T>(source: T | (() => T)): Cell<T> & Clear & Cache {
     const cache = new Reactor(source);
 
     const carrier = function () { return cache.get() } as any
@@ -71,7 +67,7 @@ function cell<T>(source: T | (() => T)): CellC<T> {
 ///
 
 
-function node<T>(source: T | (() => T)): NodeC<T> {
+function node<T>(source: T | (() => T)): Node<T> & Clear & Cache {
     const cache = new Reactor(source);
 
     const carrier = function () { return cache.get() } as any
@@ -97,7 +93,7 @@ function proxy<T>(
     getFn: () => T,
     setFn?: (value: T) => void,
     clearFn?: () => void
-): CellP<T> {
+): Cell<T> & Clear {
     const cache = new Proxy(getFn, setFn, clearFn);
 
     const carrier = function () { return cache.get() } as any;
@@ -115,24 +111,24 @@ function proxy<T>(
 ///
 
 export class Page {
-    protected cell<T>(source: T | (() => T)): CellC<T> {
+    protected cell<T>(source: T | (() => T)) {
         return cell(source);
     }
 
-    protected node<T>(getFn: () => T): NodeC<T> {
-        return node(getFn)
+    protected node<T>(source: T | (() => T)) {
+        return node(source)
     }
 
-    protected proxy<T>(getFn: () => T): ReadQ<T>
-    protected proxy<T>(getFn: () => T, setFn: (value: T) => void): WriteQ<T>
-    protected proxy<T>(getFn: () => T, clearFn: () => void): NodeP<T>
-    protected proxy<T>(getFn: () => T, setFn: (value: T) => void, clearFn: () => void): CellP<T>
+    protected proxy<T>(getFn: () => T): Node<T>
+    protected proxy<T>(getFn: () => T, setFn: (value: T) => void): Cell<T>
+    protected proxy<T>(getFn: () => T, clearFn: () => void): Node<T> & Clear
+    protected proxy<T>(getFn: () => T, setFn: (value: T) => void, clearFn: () => void): Cell<T> & Clear
 
     protected proxy<T>(
         getFn: () => T,
         setFn?: (value: T) => void,
         clearFn?: () => void
-    ): CellP<T> {
+    ) {
         return proxy(getFn, setFn, clearFn);
     }
 }

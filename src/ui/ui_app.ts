@@ -1,122 +1,71 @@
-import invariant from "tiny-invariant";
 import type { Ticket } from "../core/ticket";
 import type { UIElement } from "./ui_element";
+import type { DomElement } from "./dom_element";
+import { Page } from "../core/page";
 
-export class UIApp implements Ticket {
+export class UIApp extends Page implements Ticket {
     private readonly anchor: HTMLElement
-    private root: UIElement | null = null
-    private htmls: Map<UIElement, HTMLElement> = new Map()
-    private versions: Map<UIElement, number> = new Map()
-    private timeout: number | null = null;
+    private readonly root: UIElement
+    private mapping: Map<number, [DomElement, HTMLElement]> = new Map()
+    private handle: number | null = null;
+
+    private readonly doms = this.node(() => {
+        const result: DomElement[] = []
+        this.root.collect(result)
+        return result
+    })
 
     constructor(id: string, root: UIElement) {
+        super()
         const anchor = document.getElementById(id);
         if (!anchor) {
             throw new Error(`Element with id [${id}] not found`)
         }
         this.anchor = anchor
         this.root = root
-
-        const htmls = new Map<UIElement, HTMLElement>()
-        const versions = new Map<UIElement, number>()
-        this.build(htmls, versions, false, root);
-        this.integrate(htmls)
-        this.htmls = htmls
-        this.versions = versions
-
-        const html = htmls.get(root)
-        invariant(html, "Root element should have an HTMLElement representation")
-        this.anchor.appendChild(html);
+        this.doms.addListener((cached) => this.listen(cached))
+        this.refresh()
+        const [_, html] = this.mapping.get(root.id)!
+        anchor.replaceChildren(html)
     }
 
     private listen(cached: boolean): void {
-        if (this.timeout === null && !cached) {
-            this.timeout = window.setTimeout(this.refresh, 0)
+        if (this.handle === null && !cached) {
+            this.handle = window.setTimeout(() => this.refresh(), 0)
         }
     }
 
     private refresh(): void {
-        invariant(this.root, "Root element should not be null")
-        const htmls = new Map<UIElement, HTMLElement>()
-        const versions = new Map<UIElement, number>()
-        this.build(htmls, versions, true, this.root);
-        this.integrate(htmls);
-        this.htmls = htmls
-        this.versions = versions
-        this.timeout = null
-    }
-
-    private integrate(htmls: Map<UIElement, HTMLElement>): void {
-        // Deactivate elements that are no longer present in the tree
-        for (const element of this.htmls.keys()) {
-            if (!htmls.has(element)) {
-                element.tree.removeListener(this.listen)
-                element.onHide()
+        const newIds = new Set<number>()
+        const oldIds = new Set<number>(this.mapping.keys())
+        for (const newDom of this.doms()) {
+            newIds.add(newDom.id)
+            if (this.mapping.has(newDom.id)) {
+                const [oldDom, _] = this.mapping.get(newDom.id)!
+                if (newDom !== oldDom) {
+                    const html = newDom.update(this.mapping)
+                    this.mapping.set(newDom.id, [newDom, html])
+                }
+            } else {
+                const html = newDom.create(this.mapping)
+                this.mapping.set(newDom.id, [newDom, html])
             }
         }
-
-        // Activate new elements and update mapping
-        for (const element of htmls.keys()) {
-            if (!this.htmls.has(element)) {
-                element.tree.addListener(this.listen)
-                element.onShow()
+        for (const oldId of oldIds) {
+            if (!newIds.has(oldId)) {
+                this.mapping.delete(oldId)
             }
         }
-    }
-
-    private shouldRebuild(element: UIElement): boolean {
-        const version = this.versions.get(element);
-        if (version === undefined) {
-            return true
-        } else {
-            return element.version() !== version
-        }
-    }
-
-    private build(
-        htmls: Map<UIElement, HTMLElement>,
-        versions: Map<UIElement, number>,
-        replace: boolean,
-        element: UIElement
-    ): void {
-        const rebuild = this.shouldRebuild(element)
-
-        element.children().forEach(childElement => this.build(
-            htmls,
-            versions,
-            !rebuild,
-            childElement
-        ))
-
-        if (rebuild) {
-            const newHtml = element.tree().build(htmls)
-            htmls.set(element, newHtml)
-            versions.set(element, element.version())
-            if (replace) {
-                const oldHtml = this.htmls.get(element)
-                invariant(oldHtml, "Element should have a cached HTML representation")
-                oldHtml.replaceWith(newHtml)
-            }
-        } else {
-            const html = this.htmls.get(element)
-            invariant(html, "Element should have a cached HTML representation")
-            htmls.set(element, html)
-
-            const version = this.versions.get(element)
-            invariant(version !== undefined, "Element should have a cached version")
-            versions.set(element, version)
-        }
+        this.handle = null
     }
 
     burn(): void {
-        this.integrate(new Map())
-        this.htmls.clear()
-        this.versions.clear()
-        this.root = null
-        this.anchor.innerHTML = ''
-        if (this.timeout !== null) {
-            window.clearTimeout(this.timeout)
-            this.timeout = null
+        this.mapping.clear()
+        this.anchor.replaceChildren()
+        this.doms.removeListener(this.listen)
+        if (this.handle !== null) {
+            window.clearTimeout(this.handle)
+            this.handle = null
         }
     }
 }
