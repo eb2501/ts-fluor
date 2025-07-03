@@ -1,11 +1,11 @@
 import type { Ticket } from "../core/ticket";
-import type { UIElement } from "./ui_element";
+import type { UIView } from "./ui_view";
 import type { DomElement } from "./dom_element";
 import { Page } from "../core/page";
 
 export class UIApp extends Page implements Ticket {
     private readonly anchor: HTMLElement
-    private readonly root: UIElement
+    private readonly root: UIView<any>
     private mapping: Map<number, [DomElement, HTMLElement]> = new Map()
     private handle: number | null = null;
 
@@ -15,7 +15,7 @@ export class UIApp extends Page implements Ticket {
         return result
     })
 
-    constructor(id: string, root: UIElement) {
+    constructor(id: string, root: UIView<any>) {
         super()
         const anchor = document.getElementById(id);
         if (!anchor) {

@@ -12,6 +12,6 @@ setInterval(() => {
         return;
     }
     const idx = (counter++) % fontSizes.length;
-    p.model()!.size.set(fontSizes[idx]);
-}, 1);
+    p.model()!.size(fontSizes[idx]);
+}, 100);
 

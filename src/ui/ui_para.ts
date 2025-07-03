@@ -1,7 +1,7 @@
 import { Page, type Cell, type Node } from "../core/page"
-import { UIView } from "./ui_view"
 import { DomElement } from "./dom_element"
 import type { Size } from "./common"
+import { UIView } from "./ui_view"
 
 
 export abstract class UIParaModel extends Page {
@@ -23,8 +23,6 @@ export class UIParaFreeModel extends UIParaModel {
 
 
 export class UIPara<M extends UIParaModel> extends UIView<M> {
-    readonly model: Cell<M | null>
-
     readonly dom = this.node(() => {
         const styles: string[] = []
         const children: string[] = []
@@ -48,11 +46,6 @@ export class UIPara<M extends UIParaModel> extends UIView<M> {
             children
         )
     })
-
-    constructor(model: M | null = null) {
-        super()
-        this.model = this.cell(model)
-    }
 
     collect(doms: DomElement[]): void {
         doms.push(this.dom())

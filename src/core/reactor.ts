@@ -1,14 +1,13 @@
 import invariant from "tiny-invariant"
-import { type Clear } from "./clear"
 import { finalizer } from "./finalizer"
 import { type Cache, type Listener } from "./cache"
 import { type Ticket } from "./ticket"
 import { type Write } from "./write"
-import { isFunction } from "./utils"
 import { getCurrentMode, withMode } from "./mode"
+import type { Read } from "./read"
 
 
-type Caller = WeakRef<Clear>
+type Caller = WeakRef<NodeReactor<any>>
 
 ///
 
@@ -22,6 +21,62 @@ interface Callee {
 let currentContext: Set<Callee> | null = null
 
 ///
+
+export class CellReactor<T> implements Write<T>, Callee {
+    private callers = new Set<Caller>()
+    private value: T
+
+    constructor(value: T) {
+        this.value = value
+        this.callers = new Set()
+    }
+
+    //
+    // Write<T>
+    //
+
+    get(): T {
+        return withMode("read", () => {
+            if (currentContext) {
+                currentContext.add(this)
+            }
+            return this.value
+        })
+    }
+
+    _invalidate(): void {
+        const callers = this.callers
+        this.callers = new Set()
+        callers.forEach((ref) => {
+            const caller = ref.deref()
+            if (caller) {
+                caller._invalidate()
+            }
+        })
+    }
+
+    set(value: T): void {
+        withMode("free", () => {
+            this._invalidate()
+            this.value = value
+        })
+    }
+
+    //
+    // Callee
+    //
+
+    _addCaller(caller: Caller): void {
+        invariant(!this.callers.has(caller))
+        this.callers.add(caller)
+    }
+
+    _removeCaller(caller: Caller): void {
+        this.callers.delete(caller)
+    }
+}
+
+///////
 
 class ReactorTicket implements Ticket {
     private readonly caller: Caller
@@ -41,23 +96,18 @@ class ReactorTicket implements Ticket {
 
 ///
 
-export class Reactor<T> implements Write<T>, Clear, Cache, Callee {
+export class NodeReactor<T> implements Read<T>, Cache, Callee {
     private readonly self: Caller = new WeakRef(this)
     private readonly callees: Callee[] = []
-    private readonly source: T | (() => T)
+    private readonly getFn: () => T
     private callers: Set<Caller> | null
     private value: T | null
     private listeners: Set<Listener> | null = null
 
-    constructor(source: T | (() => T)) {
-        this.source = source
-        if (isFunction(source)) {
-            this.value = null
-            this.callers = null
-        } else {
-            this.value = source
-            this.callers = new Set()
-        }
+    constructor(getFn: () => T) {
+        this.getFn = getFn
+        this.value = null
+        this.callers = null
         finalizer.register(
             this.self,
             new ReactorTicket(this.self, this.callees),
@@ -78,17 +128,16 @@ export class Reactor<T> implements Write<T>, Clear, Cache, Callee {
     }
 
     //
-    // Write<T>
+    // Read<T>
     //
 
     get(): T {
         return withMode("read", () => {
             if (this.callers === null) {
-                invariant(isFunction(this.source))
                 const previousContext = currentContext
                 currentContext = new Set<Callee>()
                 try {
-                    this.value = this.source();
+                    this.value = this.getFn();
                     currentContext.forEach((callee) => {
                         callee._addCaller(this.self)
                         this.callees.push(callee)
@@ -106,49 +155,20 @@ export class Reactor<T> implements Write<T>, Clear, Cache, Callee {
         })
     }
 
-    private invalidate(): void {
+    _invalidate(): void {
         invariant(this.callers !== null)
         const callers = this.callers
         this.callers = null
         callers.forEach((ref) => {
             const caller = ref.deref()
             if (caller) {
-                caller.clear()
+                caller._invalidate()
             }
         })
         this.callees.forEach((callee) => callee._removeCaller(this.self))
         this.callees.length = 0
         this.value = null
-    }
-
-    set(value: T): void {
-        withMode("free", () => {
-            if (this.callers === null) {
-                this.value = value
-                this.callers = new Set()
-                this.notify()
-            } else {
-                this.invalidate()
-                this.value = value
-                this.callers = new Set()
-            }
-        })
-    }
-
-    clear(): void {
-        withMode("free", () => {
-            if (this.callers !== null) {
-                this.invalidate()
-                if (isFunction(this.source)) {
-                    this.value = null
-                    this.callers = null
-                    this.notify()
-                } else {
-                    this.value = this.source
-                    this.callers = new Set()
-                }
-            }
-        })
+        this.notify()
     }
 
     //
