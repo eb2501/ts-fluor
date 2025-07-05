@@ -1,3 +1,3 @@
 export interface Ticket {
-    burn(): void
+burn(): void
 }

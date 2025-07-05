@@ -12,22 +12,22 @@ export type Cell<T> = Write<T> & QuickWrite<T>
 ///
 
 export class Page {
-    protected cell<T>(value: T) {
-        return quickWrite(new CellReactor(value))
-    }
+  protected cell<T>(value: T) {
+    return quickWrite(new CellReactor(value))
+  }
 
-    protected node<T>(getFn: () => T) {
-        return quickCache(new NodeReactor(getFn))
-    }
+  protected node<T>(getFn: () => T) {
+    return quickCache(new NodeReactor(getFn))
+  }
 
-    protected proxy<T>(getFn: () => T): Node<T>
-    protected proxy<T>(getFn: () => T, setFn: (value: T) => void): Cell<T>
+  protected proxy<T>(getFn: () => T): Node<T>
+  protected proxy<T>(getFn: () => T, setFn: (value: T) => void): Cell<T>
  
-    protected proxy<T>(getFn: () => T, setFn?: (value: T) => void) {
-        if (setFn === undefined) {
-            return quickRead(new Proxy(getFn));
-        } else {
-            return quickWrite(new Proxy(getFn, setFn));
-        }
+  protected proxy<T>(getFn: () => T, setFn?: (value: T) => void) {
+    if (setFn === undefined) {
+      return quickRead(new Proxy(getFn));
+    } else {
+      return quickWrite(new Proxy(getFn, setFn));
     }
+  }
 }

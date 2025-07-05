@@ -8,10 +8,10 @@ new UIApp("#app", p);
 
 let counter = 0;
 setInterval(() => {
-    if (counter == 1000) {
-        return;
-    }
-    const idx = (counter++) % fontSizes.length;
+  if (counter == 1000) {
+    return;
+  }
+  const idx = (counter++) % fontSizes.length;
     p.model()!.size(fontSizes[idx]);
 }, 100);
 
