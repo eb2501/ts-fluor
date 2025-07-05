@@ -12,7 +12,7 @@ export default defineConfig([
     ],
   },
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['src/**/*.ts', 'tests/**/*.ts'],
     languageOptions: {
       ...js.languageOptions,
       parser,

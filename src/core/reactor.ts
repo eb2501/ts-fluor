@@ -2,9 +2,7 @@ import invariant from "tiny-invariant"
 import { finalizer } from "./finalizer"
 import { type Cache, type Listener } from "./cache"
 import { type Ticket } from "./ticket"
-import { type Write } from "./write"
 import { getCurrentMode, withMode } from "./mode"
-import type { Read } from "./read"
 
 
 type Caller = WeakRef<NodeReactor<any>>
@@ -22,7 +20,7 @@ let currentContext: Set<Callee> | null = null
 
 ///
 
-export class CellReactor<T> implements Write<T>, Callee {
+export class CellReactor<T> implements Callee {
   private callers = new Set<Caller>()
   private value: T
 
@@ -96,7 +94,7 @@ class ReactorTicket implements Ticket {
 
 ///
 
-export class NodeReactor<T> implements Read<T>, Cache, Callee {
+export class NodeReactor<T> implements Cache, Callee {
   private readonly self: Caller = new WeakRef(this)
   private readonly callees: Callee[] = []
   private readonly getFn: () => T
