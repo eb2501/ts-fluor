@@ -1,41 +1,55 @@
-import type { Ticket } from "../core/ticket";
 import type { UIView } from "./ui_view";
 import type { DomElement } from "./dom_element";
 import { Page } from "../core/page";
+import invariant from "tiny-invariant";
 
-export class UIApp extends Page implements Ticket {
+export abstract class UIApp extends Page {
   private readonly anchor: HTMLElement
-  private readonly root: UIView<any>
-  private mapping: Map<number, [DomElement, HTMLElement]> = new Map()
-  private handle: number | null = null;
-
+  private readonly mapping: Map<number, [DomElement, HTMLElement]> = new Map()
+  private handle: number | null = null
+  private root = this.cell<UIView | null>(null)
+  
   private readonly doms = this.node(() => {
     const result: DomElement[] = []
-    this.root.collect(result)
+    this.root()?.collect(result)
     return result
   })
 
-  constructor(id: string, root: UIView<any>) {
+  private readonly attached = this.node(() => {
+    const root = this.root()
+    if (root === null) {
+      this.anchor.replaceChildren()
+      return false
+    } else {
+      invariant(this.mapping.has(root.id), "Root element must be in mapping")
+      const [_, html] = this.mapping.get(root.id)!
+      this.anchor.replaceChildren(html)
+    }
+  })
+
+  constructor(id: string) {
     super()
     const anchor = document.getElementById(id);
     if (!anchor) {
       throw new Error(`Element with id [${id}] not found`)
     }
     this.anchor = anchor
-    this.root = root
     this.doms.addListener((cached) => this.listen(cached))
-    this.refresh()
-    const [_, html] = this.mapping.get(root.id)!
-    anchor.replaceChildren(html)
+    this.update()
+  }
+
+  run(root: UIView | null): void {
+    this.root(root)
   }
 
   private listen(cached: boolean): void {
     if (this.handle === null && !cached) {
-      this.handle = window.setTimeout(() => this.refresh(), 0)
+      this.handle = window.setTimeout(() => this.update(), 0)
     }
   }
 
-  private refresh(): void {
+  private update(): void {
+    invariant(this.mapping !== null, "UIApp not initialized")
     const newIds = new Set<number>()
     const oldIds = new Set<number>(this.mapping.keys())
     for (const newDom of this.doms()) {
@@ -56,16 +70,7 @@ export class UIApp extends Page implements Ticket {
         this.mapping.delete(oldId)
       }
     }
+    this.attached()
     this.handle = null
-  }
-
-  burn(): void {
-    this.mapping.clear()
-    this.anchor.replaceChildren()
-    this.doms.removeListener(this.listen)
-    if (this.handle !== null) {
-      window.clearTimeout(this.handle)
-      this.handle = null
-    }
   }
 }

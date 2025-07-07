@@ -1,38 +1,32 @@
-import { Page, type Cell, type Node } from "../core/page"
+import { type Node, type ToNode } from "../core/page"
 import { DomElement } from "./dom_element"
 import type { Size } from "./common"
 import { UIView } from "./ui_view"
 
 
-export abstract class UIParaModel extends Page {
-    abstract readonly text: Node<string>
-    abstract readonly size: Node<Size | null>
+export interface UIParaArgs {
+  text?: ToNode<string>
+  size?: ToNode<Size>
 }
 
+export class UIPara extends UIView {
+  private readonly text: Node<string> | null
+  private readonly size: Node<Size> | null
 
-export class UIParaFreeModel extends UIParaModel {
-  readonly text: Cell<string>
-  readonly size: Cell<Size | null>
-    
-  constructor(text: string = "", size: Size | null = null) {
+  constructor(args: UIParaArgs = {}) {
     super()
-    this.text = this.cell(text)
-    this.size = this.cell(size)
+    this.text = args.text !== undefined ? this.node(args.text) : null
+    this.size = args.size !== undefined ? this.node(args.size) : null
   }
-}
 
-
-export class UIPara<M extends UIParaModel> extends UIView<M> {
   readonly dom = this.node(() => {
     const styles: string[] = []
     const children: string[] = []
-    const model = this.model()
-    if (model) {
-      const size = model.size()
-      if (size) {
-        styles.push("font-size", size)
-      }
-      children.push(model.text())
+    if (this.size) {
+      styles.push("font-size", this.size())
+    }
+    if (this.text) {
+      children.push(this.text())
     }
     return new DomElement(
       this.id,
@@ -50,9 +44,4 @@ export class UIPara<M extends UIParaModel> extends UIView<M> {
   collect(doms: DomElement[]): void {
     doms.push(this.dom())
   }
-}
-
-
-export function para(text: string = "", size: Size | null = null): UIPara<UIParaFreeModel> {
-  return new UIPara<UIParaFreeModel>(new UIParaFreeModel(text, size))
 }

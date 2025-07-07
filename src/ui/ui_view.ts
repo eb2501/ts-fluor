@@ -1,16 +1,14 @@
-import { Page, type Cell } from "../core/page";
+import { Page, type Node } from "../core/page";
 import type { DomElement } from "./dom_element";
 import { newId } from "./id_gen";
 
-export abstract class UIView<M> extends Page {
+export abstract class UIView extends Page {
   readonly id: number
-  readonly model: Cell<M | null>
 
-  constructor(model: M | null = null) {
+  constructor() {
     super()
     this.id = newId()
-    this.model = this.cell(model)
   }
 
-    abstract collect(doms: DomElement[]): void
+  abstract collect(doms: DomElement[]): void
 }
