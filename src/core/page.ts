@@ -42,7 +42,7 @@ function isCell<T>(value: any): value is Cell<T> {
 
 ///////
 
-export type ToNode<T> = T | (() => T) | Node<T>
+export type ToNode<T> = T | (() => T) | Node<T> | Cell<T>
 
 export type ToCell<T> = T | Cell<T>
 

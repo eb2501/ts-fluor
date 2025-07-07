@@ -29,6 +29,7 @@ export default defineConfig([
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       indent: ['error', 2, { SwitchCase: 1 }],
+      'semi': ['error', 'never'],
     },
   },
   {}, // catch-all config for ESLint flat config

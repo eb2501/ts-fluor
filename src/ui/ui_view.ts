@@ -1,6 +1,6 @@
-import { Page, type Node } from "../core/page";
-import type { DomElement } from "./dom_element";
-import { newId } from "./id_gen";
+import { Page } from "../core/page"
+import type { DomElement } from "./dom_element"
+import { newId } from "./id_gen"
 
 export abstract class UIView extends Page {
   readonly id: number

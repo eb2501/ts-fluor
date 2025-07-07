@@ -1,7 +1,7 @@
-import type { UIView } from "./ui_view";
-import type { DomElement } from "./dom_element";
-import { Page } from "../core/page";
-import invariant from "tiny-invariant";
+import type { UIView } from "./ui_view"
+import type { DomElement } from "./dom_element"
+import { Page } from "../core/page"
+import invariant from "tiny-invariant"
 
 export abstract class UIApp extends Page {
   private readonly anchor: HTMLElement
@@ -29,7 +29,7 @@ export abstract class UIApp extends Page {
 
   constructor(id: string) {
     super()
-    const anchor = document.getElementById(id);
+    const anchor = document.getElementById(id)
     if (!anchor) {
       throw new Error(`Element with id [${id}] not found`)
     }

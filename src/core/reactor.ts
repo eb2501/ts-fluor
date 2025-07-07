@@ -135,13 +135,13 @@ export class NodeReactor<T> implements Cache, Callee {
         const previousContext = currentContext
         currentContext = new Set<Callee>()
         try {
-          this.value = this.getFn();
+          this.value = this.getFn()
           currentContext.forEach((callee) => {
             callee._addCaller(this.self)
             this.callees.push(callee)
-          });
+          })
         } finally {
-          currentContext = previousContext;
+          currentContext = previousContext
         }
         this.callers = new Set()
         this.notify()

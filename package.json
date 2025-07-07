@@ -18,6 +18,7 @@
   "keywords": [],
   "description": "",
   "devDependencies": {
+    "@types/color-name": "^2.0.0",
     "@types/node": "22.15.29",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
