@@ -1,7 +1,8 @@
 // Vite entry for TypeScript support
 import type { Size } from './ui/common'
 import { UIApp } from './ui/ui_app'
-import { UIBorder } from './ui/ui_border'
+import { border } from './ui/ui_border'
+import { flex } from './ui/ui_flex'
 import { UIPara } from './ui/ui_para'
 
 const fontSizes: Size[] = ["15px", "18px", "21px", "23px", "25px"]
@@ -15,18 +16,27 @@ class MyUIApp extends UIApp {
 
   constructor() {
     super("#app")
-    this.run(new UIBorder({
-      style: "solid",
-      color: "black",
-      width: this.borderWidth,
-      radius: "5px",
-      padding: "10px",
-      margin: "10px",
-      child: new UIPara({
-        text: "Hello from MyUIApp!",
-        size: this.fontSize
+    this.run(
+      flex({
+        children: [
+          border({
+            child: new UIPara({
+              text: "Hello from MyUIApp!",
+            }),
+            style: "solid",
+            width: "5px"
+          }),
+          border({
+            child: new UIPara({
+              text: "This is a paragraph with dynamic font size.",
+            }),
+            style: "dashed",
+            width: "5px",
+          }),
+        ],
+        justify: "center"
       })
-    }))
+    )
   }
 }
 

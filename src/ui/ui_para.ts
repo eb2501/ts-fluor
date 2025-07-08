@@ -19,7 +19,7 @@ export class UIPara extends UIView {
     this.size = args.size !== undefined ? this.node(args.size) : null
   }
 
-  readonly dom = this.node(() => {
+  private readonly rootDom = this.node(() => {
     const styles: string[] = []
     const children: string[] = []
     if (this.size) {
@@ -42,6 +42,10 @@ export class UIPara extends UIView {
   })
 
   collect(doms: DomElement[]): void {
-    doms.push(this.dom())
+    doms.push(this.rootDom())
   }
+}
+
+export function para(args: UIParaArgs = {}) {
+  return new UIPara(args)
 }

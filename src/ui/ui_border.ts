@@ -43,7 +43,7 @@ export class UIBorder extends UIView {
     this.style = args.style !== undefined ? this.node(args.style) : null
   }
 
-  readonly dom = this.node(() => {
+  private readonly rootDom = this.node(() => {
     const styles: string[] = []
     if (this.color) {
       styles.push("border-color", this.color())
@@ -79,6 +79,10 @@ export class UIBorder extends UIView {
 
   collect(doms: DomElement[]): void {
     this.child().collect(doms)
-    doms.push(this.dom())
+    doms.push(this.rootDom())
   }
+}
+
+export function border(args: UIBorderArgs) {
+  return new UIBorder(args)
 }
