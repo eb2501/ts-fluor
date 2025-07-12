@@ -1,21 +1,22 @@
 import type { UIView } from "./ui_view"
-import type { DomElement } from "./dom_element"
-import { Page } from "../core/page"
+import type { DomPiece } from "./dom_piece"
+import { node, cell } from "../core/page"
 import invariant from "tiny-invariant"
 
-export abstract class UIApp extends Page {
+
+export class UIApp {
   private readonly anchor: HTMLElement
-  private readonly mapping: Map<number, [DomElement, HTMLElement]> = new Map()
+  private readonly mapping: Map<number, [DomPiece, HTMLElement]> = new Map()
+  private readonly root = cell<UIView | null>(null)
   private handle: number | null = null
-  private root = this.cell<UIView | null>(null)
   
-  private readonly doms = this.node(() => {
-    const result: DomElement[] = []
-    this.root()?.collect(result)
-    return result
+  private readonly pieces = node(() => {
+    const pieces: DomPiece[] = []
+    this.root()?.collect(pieces)
+    return pieces
   })
 
-  private readonly attached = this.node(() => {
+  private readonly attached = node(() => {
     const root = this.root()
     if (root === null) {
       this.anchor.replaceChildren()
@@ -28,18 +29,21 @@ export abstract class UIApp extends Page {
   })
 
   constructor(id: string) {
-    super()
     const anchor = document.getElementById(id)
     if (!anchor) {
       throw new Error(`Element with id [${id}] not found`)
     }
     this.anchor = anchor
-    this.doms.addListener((cached) => this.listen(cached))
+    this.pieces.addListener((cached) => this.listen(cached))
     this.update()
   }
 
-  run(root: UIView | null): void {
+  start(root: UIView): void {
     this.root(root)
+  }
+
+  stop() {
+    this.root(null)
   }
 
   private listen(cached: boolean): void {
@@ -48,25 +52,34 @@ export abstract class UIApp extends Page {
     }
   }
 
+  private resolve(id: number): HTMLElement {
+    const couple = this.mapping.get(id)
+    invariant(couple, `No piece found for id [${id}]`)
+    return couple[1]
+  }
+
   private update(): void {
     invariant(this.mapping !== null, "UIApp not initialized")
     const newIds = new Set<number>()
     const oldIds = new Set<number>(this.mapping.keys())
-    for (const newDom of this.doms()) {
-      newIds.add(newDom.id)
-      if (this.mapping.has(newDom.id)) {
-        const [oldDom, _] = this.mapping.get(newDom.id)!
-        if (newDom !== oldDom) {
-          const html = newDom.update(this.mapping)
-          this.mapping.set(newDom.id, [newDom, html])
+    for (const newPiece of this.pieces()) {
+      newIds.add(newPiece.id)
+      if (this.mapping.has(newPiece.id)) {
+        const [oldPiece, oldHtml] = this.mapping.get(newPiece.id)!
+        if (newPiece !== oldPiece) {
+          newPiece.updateHtml((id) => this.resolve(id), oldPiece, oldHtml)
+          this.mapping.set(newPiece.id, [newPiece, oldHtml])
         }
       } else {
-        const html = newDom.create(this.mapping)
-        this.mapping.set(newDom.id, [newDom, html])
+        const newHtml = newPiece.initHtml()
+        newPiece.buildHtml((id) => this.resolve(id), newHtml)
+        this.mapping.set(newPiece.id, [newPiece, newHtml])
       }
     }
     for (const oldId of oldIds) {
       if (!newIds.has(oldId)) {
+        const [oldPiece, oldHtml] = this.mapping.get(oldId)!
+        oldPiece.freeHtml(oldHtml)
         this.mapping.delete(oldId)
       }
     }

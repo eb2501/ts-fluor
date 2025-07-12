@@ -1,51 +1,55 @@
-import { type Node, type ToNode } from "../core/page"
-import { DomElement } from "./dom_element"
+import { node, type Node, type ToNode } from "../core/page"
+import { DomPiece } from "./dom_piece"
 import type { Size } from "./common"
 import { UIView } from "./ui_view"
 
+
+class ParaDomPiece extends DomPiece {
+  constructor(para: UIPara) {
+    super(para.id)
+    if (para.size) {
+      this.dynStyleAttrs.push("font-size", para.size())
+    }
+    if (para.text) {
+      this.dynChildren.push(para.text())
+    }
+  }
+
+  initHtml(): HTMLElement {
+    const html = document.createElement("p")
+    html.id = `fluor-id-${this.id}`
+    html.classList.add("fluor-para")
+    return html
+  }
+}
+
+export class UIPara extends UIView {
+  readonly text: Node<string> | null
+  readonly size: Node<Size> | null
+
+  constructor(text: Node<string> | null, size: Node<Size> | null) {
+    super()
+    this.text = text
+    this.size = size
+  }
+
+  private readonly rootPiece = node(() => new ParaDomPiece(this))
+
+  collect(pieces: DomPiece[]): void {
+    pieces.push(this.rootPiece())
+  }
+}
+
+///////
 
 export interface UIParaArgs {
   text?: ToNode<string>
   size?: ToNode<Size>
 }
 
-export class UIPara extends UIView {
-  private readonly text: Node<string> | null
-  private readonly size: Node<Size> | null
-
-  constructor(args: UIParaArgs = {}) {
-    super()
-    this.text = args.text !== undefined ? this.node(args.text) : null
-    this.size = args.size !== undefined ? this.node(args.size) : null
-  }
-
-  private readonly rootDom = this.node(() => {
-    const styles: string[] = []
-    const children: string[] = []
-    if (this.size) {
-      styles.push("font-size", this.size())
-    }
-    if (this.text) {
-      children.push(this.text())
-    }
-    return new DomElement(
-      this.id,
-      "p",
-      ["fluor-para"],
-      null,
-      null,
-      styles,
-      null,
-      null,
-      children
-    )
-  })
-
-  collect(doms: DomElement[]): void {
-    doms.push(this.rootDom())
-  }
-}
-
 export function para(args: UIParaArgs = {}) {
-  return new UIPara(args)
+  return new UIPara(
+    args.text !== undefined ? node(args.text) : null,
+    args.size !== undefined ? node(args.size) : null
+  )
 }

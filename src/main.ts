@@ -1,51 +1,50 @@
 // Vite entry for TypeScript support
+import { cell, node } from './core'
 import type { Size } from './ui/common'
 import { UIApp } from './ui/ui_app'
 import { border } from './ui/ui_border'
-import { flex } from './ui/ui_flex'
-import { UIPara } from './ui/ui_para'
+import { grid } from './ui/ui_grid'
+import { para } from './ui/ui_para'
+import { textbox } from './ui/ui_textbox'
 
 const fontSizes: Size[] = ["15px", "18px", "21px", "23px", "25px"]
 const borderWidths: Size[] = ["1px", "2px", "5px", "10px", "20px"]
 
-class MyUIApp extends UIApp {
-  readonly counter = this.cell(4)
+const counter = cell(2)
+const fontSize = node(() => fontSizes[counter() % fontSizes.length])
+const borderWidth = node(() => borderWidths[counter() % borderWidths.length])
 
-  readonly fontSize = this.node(() => fontSizes[this.counter() % fontSizes.length])
-  readonly borderWidth = this.node(() => borderWidths[this.counter() % borderWidths.length])
+const view = grid({
+  children: [
+    border({
+      child: para({
+        text: "Hello from MyUIApp!",
+        size: fontSize,
+      }),
+      style: "solid",
+      width: borderWidth
+    }),
+    textbox({
+      value: "Coucou!",
+      placeholder: "Type something...",
+    }),
+    border({
+      child: para({
+        text: "This is a paragraph with dynamic font size.",
+        size: fontSize,
+      }),
+      style: "dashed",
+      width: borderWidth,
+    }),
+  ],
+})
 
-  constructor() {
-    super("#app")
-    this.run(
-      flex({
-        children: [
-          border({
-            child: new UIPara({
-              text: "Hello from MyUIApp!",
-            }),
-            style: "solid",
-            width: "5px"
-          }),
-          border({
-            child: new UIPara({
-              text: "This is a paragraph with dynamic font size.",
-            }),
-            style: "dashed",
-            width: "5px",
-          }),
-        ],
-        justify: "center"
-      })
-    )
-  }
-}
-
-const app = new MyUIApp()
+const app = new UIApp("#app")
+app.start(view)
 // setInterval(() => {
-//   if (app.counter() == 1000) {
-//     app.run(null)
+//   if (counter() == 1000) {
+//     app.stop()
 //     return
 //   }
-//   app.counter(app.counter() + 1)
-// }, 1)
-
+//   counter(counter() + 1)
+// }, 100)

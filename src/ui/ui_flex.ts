@@ -1,73 +1,90 @@
-import type { ToNode } from "../core"
-import { DomElement } from "./dom_element"
+import type { ToNode } from "../core/page"
+import { type Size } from "./common"
+import { DomPiece } from "./dom_piece"
 import { UIView } from "./ui_view"
-import type { Node } from "../core"
-import type { Size } from "./common"
-import { newId } from "./id_gen"
+import { node, type Node } from "../core/page"
 
 export type FlexDirection = "row" | "column"
-
 export type FlexAlign = "start" | "center" | "end" | "stretch"
-
 export type FlexJustify = "start" | "center" | "end" | "between" | "around" | "evenly"
 
-export interface UIFlexArgs {
-  children: ToNode<UIView[]>
-  direction?: ToNode<FlexDirection>
-  align?: ToNode<FlexAlign>
-  justify?: ToNode<FlexJustify>
-  gap?: ToNode<Size>
+///////
+
+class FlexDomPiece extends DomPiece {
+  constructor(flex: UIFlex) {
+    super(flex.id)
+    if (flex.align) {
+      this.dynStyleAttrs.push("align-items", flex.align())
+    }
+    flex.children().forEach(child => this.dynChildren.push(child.id))
+    if (flex.direction) {
+      this.dynStyleAttrs.push("flex-direction", flex.direction())
+    }
+    if (flex.gap) {
+      this.dynStyleAttrs.push("gap", flex.gap())
+    }
+    if (flex.justify) {
+      this.dynStyleAttrs.push("justify-content", flex.justify())
+    }
+  }
+
+  initHtml(): HTMLElement {
+    const html = document.createElement("div")
+    html.id = `fluor-id-${this.id}`
+    html.classList.add("fluor-flex")
+    html.style.display = "flex"
+    return html
+  }
 }
 
+///////
+
 export class UIFlex extends UIView {
+  readonly align: Node<FlexAlign> | null
   readonly children: Node<UIView[]>
   readonly direction: Node<FlexDirection> | null
-  readonly align: Node<string> | null
-  readonly justify: Node<string> | null
   readonly gap: Node<Size> | null
+  readonly justify: Node<FlexJustify> | null
 
-  constructor(args: UIFlexArgs) {
+  constructor(
+    align: Node<FlexAlign> | null,
+    children: Node<UIView[]>,
+    direction: Node<FlexDirection> | null,
+    gap: Node<Size> | null,
+    justify: Node<FlexJustify> | null,
+  ) {
     super()
-    this.children = this.node(args.children)
-    this.direction = args.direction !== undefined ? this.node(args.direction) : null
-    this.align = args.align !== undefined ? this.node(args.align) : null
-    this.justify = args.justify !== undefined ? this.node(args.justify) : null
-    this.gap = args.gap !== undefined ? this.node(args.gap) : null
+    this.align = align
+    this.children = children
+    this.direction = direction
+    this.gap = gap
+    this.justify = justify
   }
 
-  private readonly rootDom = this.node(() => {
-    const styles: string[] = []
-    if (this.direction) {
-      styles.push("flex-direction", this.direction())
-    }
-    if (this.align) {
-      styles.push("align-items", this.align())
-    }
-    if (this.justify) {
-      styles.push("justify-content", this.justify())
-    }
-    if (this.gap) {
-      styles.push("gap", this.gap())
-    }
-    return new DomElement(
-      this.id,
-      "div",
-      ["fluor-flex"],
-      null,
-      ['display', 'flex'],
-      styles,
-      null,
-      null,
-      this.children().map(child => child.id)
-    )
-  })
+  private readonly rootPiece = node(() => new FlexDomPiece(this))
 
-  collect(doms: DomElement[]): void {
-    this.children().forEach(child => child.collect(doms))
-    doms.push(this.rootDom())
+  collect(pieces: DomPiece[]): void {
+    this.children().forEach(child => child.collect(pieces))
+    pieces.push(this.rootPiece())
   }
+}
+
+///////
+
+export interface UIFlexArgs {
+  align?: ToNode<FlexAlign>
+  children: ToNode<UIView[]>
+  direction?: ToNode<FlexDirection>
+  gap?: ToNode<Size>
+  justify?: ToNode<FlexJustify>
 }
 
 export function flex(args: UIFlexArgs) {
-  return new UIFlex(args)
+  return new UIFlex(
+    args.align !== undefined ? node(args.align) : null,
+    node(args.children),
+    args.direction !== undefined ? node(args.direction) : null,
+    args.gap !== undefined ? node(args.gap) : null,
+    args.justify !== undefined ? node(args.justify) : null
+  )
 }

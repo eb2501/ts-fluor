@@ -48,44 +48,41 @@ export type ToCell<T> = T | Cell<T>
 
 ///////
 
-export class Page {
-  protected cell<T>(value: ToCell<T>): Cell<T> {
-    if (isCell<T>(value)) {
-      return value
-    } else {
-      const target = new CellReactor(value)
-      return function (value?: T) {
-        if (value !== undefined) {
-          target.set(value)
-          return value
-        } else {
-          return target.get()
-        }
+export function cell<T>(value: ToCell<T>): Cell<T> {
+  if (isCell<T>(value)) {
+    return value
+  } else {
+    const target = new CellReactor(value)
+    return function (value?: T) {
+      if (value !== undefined) {
+        target.set(value)
+        return value
+      } else {
+        return target.get()
       }
     }
   }
-
-  protected node<T>(value: ToNode<T>): Node<T> & Cache {
-    if (isNodeAndCache<T>(value)) {
-      return value
-    } else {
-      const target = new NodeReactor(
-        isFunction(value) ? value : () => value
-      )
-      const node = function () {
-        return target.get()
-      } as any
-      Object.defineProperty(node, "_payload", {
-        value: target,
-        enumerable: false,
-      })
-      Object.defineProperty(node, "isCached", {
-        get: carrierIsCached,
-        enumerable: true,
-      })
-      node.addListener = carrierAddListener
-      node.removeListener = carrierRemoveListener
-      return node
-    }
+}
+export function node<T>(value: ToNode<T>): Node<T> & Cache {
+  if (isNodeAndCache<T>(value)) {
+    return value
+  } else {
+    const target = new NodeReactor(
+      isFunction(value) ? value : () => value
+    )
+    const node = function () {
+      return target.get()
+    } as any
+    Object.defineProperty(node, "_payload", {
+      value: target,
+      enumerable: false,
+    })
+    Object.defineProperty(node, "isCached", {
+      get: carrierIsCached,
+      enumerable: true,
+    })
+    node.addListener = carrierAddListener
+    node.removeListener = carrierRemoveListener
+    return node
   }
 }

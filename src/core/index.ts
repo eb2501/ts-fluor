@@ -1,1 +1,1 @@
-export { Page, type Node, type Cell, type ToNode } from './page'
+export { node, cell, type Node, type Cell, type ToNode } from './page'

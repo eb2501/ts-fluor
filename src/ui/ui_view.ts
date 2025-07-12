@@ -1,14 +1,12 @@
-import { Page } from "../core/page"
-import type { DomElement } from "./dom_element"
+import type { DomPiece } from "./dom_piece"
 import { newId } from "./id_gen"
 
-export abstract class UIView extends Page {
+export abstract class UIView {
   readonly id: number
 
   constructor() {
-    super()
     this.id = newId()
   }
 
-  abstract collect(doms: DomElement[]): void
+  abstract collect(pieces: DomPiece[]): void
 }
