@@ -1,64 +1,61 @@
-import { DomPiece } from './dom_piece'
-import { UIView } from './ui_view'
-import type { ToNode } from '../core'
-import type { Node } from '../core'
-import { cell, node, type Cell, type ToCell } from '../core/page'
+import { UIPiece } from './ui_piece'
+import { cell, type Cell, type ToCell } from '../core/page'
+import type { Assembler } from './assembler'
 
-class TextBoxDomPiece extends DomPiece {
-  private readonly textbox: UITextBox
-
-  constructor(textbox: UITextBox) {
-    super(textbox.id)
-    this.textbox = textbox
-    this.dynAttrs.push('value', textbox.value())
-    if (textbox.placeholder) {
-      this.dynAttrs.push('placeholder', textbox.placeholder())
-    }
-  }
-
-  initHtml(): HTMLElement {
-    const html = document.createElement('input')
-    html.id = `fluor-id-${this.id}`
-    html.classList.add('fluor-textbox')
-    html.type = 'text'
-    html.onchange = (e: Event) => {
-      const text = (e.target as HTMLInputElement).value
-      this.textbox.value(text)
-    }
-    return html
-  }
-}
-
-export class UITextBox extends UIView {
+export class UITextBox extends UIPiece {
   readonly value: Cell<string>
-  readonly placeholder: Node<string> | null
+  readonly placeholder?: string
 
   constructor(
-    placeholder: Node<string> | null,
-    value: Cell<string>
+    value: Cell<string>,
+    placeholder?: string,
   ) {
     super()
     this.value = value
     this.placeholder = placeholder
   }
 
-  readonly rootPiece = node(() => new TextBoxDomPiece(this))
+  attach(html: HTMLElement): void {
+    super.attach(html)
+    const input = html as HTMLInputElement
+    input.onchange = (_: Event) => {
+      this.value(input.value)
+    }
+  }
+  
+  detach(html: HTMLElement): void {
+    super.detach(html)
+    const input = html as HTMLInputElement
+    input.onchange = null
+  }
 
-  collect(pieces: DomPiece[]): void {
-    pieces.push(this.rootPiece())
+  render<T>(assembler: Assembler<T>): T {
+    const attrs: Record<string, string> = {
+      class: 'fluor-textbox',
+      type: 'text',
+      value: this.value(),
+    }
+    if (this.placeholder) {
+      attrs.placeholder = this.placeholder
+    }
+    return assembler.node(
+      'input',
+      attrs,
+      []
+    )
   }
 }
 
 ///////
 
 export interface UITextBoxArgs {
-  placeholder?: ToNode<string>
   value: ToCell<string>
+  placeholder?: string
 }
 
 export function textbox(args: UITextBoxArgs) {
   return new UITextBox(
-    args.placeholder !== undefined ? node(args.placeholder) : null,
-    cell(args.value)
+    cell(args.value),
+    args.placeholder
   )
 }
