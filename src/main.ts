@@ -2,15 +2,20 @@
 import { cell } from './core'
 import { group } from './ui'
 import { UIApp } from './ui/ui_app'
+import { checkBox } from './ui/ui_checkbox'
 import { grid } from './ui/ui_grid'
+import { h1 } from './ui/ui_heading'
 import { para } from './ui/ui_para'
 import { radioButton } from './ui/ui_radiobtn'
-import { textbox } from './ui/ui_textbox'
+import { textBox } from './ui/ui_textbox'
 
 const selected = cell(true)
 
 const piece = grid({
   items: [
+    [
+      h1('Title!')
+    ],
     [
       para({
         text: "Hello from MyUIApp!",
@@ -18,7 +23,7 @@ const piece = grid({
     ],
     [
       group({
-        content: textbox({
+        content: textBox({
           value: "",
           placeholder: "Type something...",
         }),
@@ -32,7 +37,6 @@ const piece = grid({
     ],
     [
       radioButton({
-        text: "Straight",
         group: "radio",
         checked: (value?: boolean) => {
           if (value === undefined) {
@@ -46,7 +50,6 @@ const piece = grid({
     ],
     [
       radioButton({
-        text: "Inverted",
         group: "radio",
         checked: (value?: boolean) => {
           if (value === undefined) {
@@ -58,6 +61,11 @@ const piece = grid({
         }
       })
     ],
+    [
+      checkBox({
+        checked: selected
+      })
+    ]
   ],
 })
 

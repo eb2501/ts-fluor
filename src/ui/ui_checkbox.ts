@@ -1,16 +1,14 @@
 import { cell, node, snapshot, type Cell } from "../core"
 import type { ToCell } from "../core/page"
+import { newId } from "./id_gen"
 import { type UIPiece } from "./ui_piece"
 
-export class UIRadioButton implements UIPiece {
-  readonly group: string
+export class UICheckBox implements UIPiece {
   readonly checked: Cell<boolean>
 
   constructor(
-    group: string,
-    checked: Cell<boolean>,
+    checked: Cell<boolean>
   ) {
-    this.group = group
     this.checked = checked
   }
 
@@ -18,9 +16,7 @@ export class UIRadioButton implements UIPiece {
 
   readonly html = node(() => {
     const input = document.createElement("input")
-    input.className = "fluor-radio-button"
-    input.name = this.group
-    input.type = "radio"
+    input.type = "checkbox"
 
     // Initial UI population
     input.checked = snapshot(() => this.cache())
@@ -38,6 +34,7 @@ export class UIRadioButton implements UIPiece {
         setTimeout(() => this.refresh(), 0)
       }
     })
+
     return input
   })
 
@@ -51,14 +48,12 @@ export class UIRadioButton implements UIPiece {
 
 ///////
 
-export interface UIRadioButtonArgs {
-  group: string,
-  checked: ToCell<boolean>,
+export interface UICheckBoxArgs {
+  checked: ToCell<boolean>
 }
 
-export function radioButton(args: UIRadioButtonArgs) {
-  return new UIRadioButton(
-    args.group,
-    cell(args.checked),
+export function checkBox(args: UICheckBoxArgs) {
+  return new UICheckBox(
+    cell(args.checked)
   )
 }

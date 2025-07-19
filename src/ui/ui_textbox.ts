@@ -59,7 +59,7 @@ export interface UITextBoxArgs {
   placeholder?: string
 }
 
-export function textbox(args: UITextBoxArgs) {
+export function textBox(args: UITextBoxArgs) {
   return new UITextBox(
     cell(args.value),
     args.placeholder
