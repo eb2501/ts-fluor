@@ -20,6 +20,18 @@ let currentContext: Set<Callee> | null = null
 
 ///
 
+export function snapshot<T>(fn: () => T): T {
+  const previousContext = currentContext
+  currentContext = null
+  try {
+    return fn()
+  } finally {
+    currentContext = previousContext
+  }
+}
+
+///
+
 export class CellReactor<T> implements Callee {
   private callers = new Set<Caller>()
   private value: T

@@ -1,25 +1,19 @@
-import type { Assembler } from "./assembler"
-import { UIPiece } from "./ui_piece"
+import { node } from "../core"
+import { type UIPiece } from "./ui_piece"
 
-export class UIPara extends UIPiece {
+export class UIPara implements UIPiece {
   readonly text: string
 
   constructor(text: string) {
-    super()
     this.text = text
   }
 
-  render<T>(assembler: Assembler<T>): T {
-    return assembler.node(
-      "p",
-      {
-        "class": "fluor-para"
-      },
-      [
-        assembler.text(this.text)
-      ]
-    )
-  }
+  readonly html = node(() => {
+    const html = document.createElement("p")
+    html.className = "fluor-para"
+    html.textContent = this.text
+    return html
+  })
 }
 
 ///////

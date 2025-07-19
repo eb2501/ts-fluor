@@ -1,7 +1,7 @@
-import type { Assembler } from "./assembler"
-import { UIPiece } from "./ui_piece"
+import { node } from "../core"
+import { type UIPiece } from "./ui_piece"
 
-export class UIGroup extends UIPiece {
+export class UIGroup implements UIPiece {
   readonly content: UIPiece
   readonly legend?: string
 
@@ -9,32 +9,22 @@ export class UIGroup extends UIPiece {
     content: UIPiece,
     legend?: string,
   ) {
-    super()
     this.content = content
     this.legend = legend
   }
 
-  render<T>(assembler: Assembler<T>): T {
-    const children = [assembler.child(this.content)]
+  readonly html = node(() => {
+    const html = document.createElement("fieldset")
+    html.className = "fluor-group"
     if (this.legend) {
-      children.push(
-        assembler.node(
-          "legend",
-          {
-            "class": "fluor-group-legend"
-          },
-          [assembler.text(this.legend)]
-        )
-      )
+      const legend = document.createElement("legend")
+      legend.className = "fluor-group-legend"
+      legend.textContent = this.legend
+      html.appendChild(legend)
     }
-    return assembler.node(
-      "fieldset",
-      {
-        "class": "fluor-group"
-      },
-      children
-    )
-  }
+    html.appendChild(this.content.html())
+    return html
+  })
 }
 
 ///////
