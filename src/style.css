@@ -3,3 +3,7 @@
   padding: 0;
   margin: 0;
 }
+
+.fluor-uiParsedTextBox .fluor-invalid input {
+  outline: 2px solid red;
+}

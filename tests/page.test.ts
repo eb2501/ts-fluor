@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { getCurrentMode, type Mode } from "../src/core/mode"
-import { cell, node, Page } from "../src/core/page"
+import { cell, node } from "../src/core"
 
 describe("Cell", () => {
   it("statically should behave like read/write properties", () => {
@@ -68,9 +68,7 @@ describe("Nodes", () => {
     const flag = cell(true)
     const x = cell(42)
     const y = cell(12)
-    const z = node(
-      () => flag() ? x() + y() : x() + 1
-    )
+    const z = node(() => (flag() ? x() + y() : x() + 1))
 
     // The value is as expected
     expect(z()).toBe(54)

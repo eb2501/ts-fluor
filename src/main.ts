@@ -1,42 +1,39 @@
-// Vite entry for TypeScript support
 import { cell } from './core'
-import { group } from './ui'
+import { uiGroup } from './ui'
 import { UIApp } from './ui/ui_app'
-import { checkBox } from './ui/ui_checkbox'
-import { grid } from './ui/ui_grid'
-import { h1 } from './ui/ui_heading'
-import { para } from './ui/ui_para'
-import { radioButton } from './ui/ui_radiobtn'
-import { textBox } from './ui/ui_textbox'
+import { uiCheckBox } from './ui/alpha/ui_check_box'
+import { uiGrid } from './ui/alpha/ui_grid'
+import { uiH1 } from './ui/alpha/ui_heading'
+import { uiPara } from './ui/alpha/ui_para'
+import { uiRadioButton } from './ui/alpha/ui_radio_btn'
+import { uiTextBox } from './ui/alpha/ui_text_box'
+
+import validator from 'validator'
+import { ParseError, uiParsedTextBox } from './ui/beta/ui_parsed_tb'
 
 const selected = cell(true)
 
-const piece = grid({
-  items: [
-    [
-      h1('Title!')
-    ],
-    [
-      para({
-        text: "Hello from MyUIApp!",
-      })
-    ],
-    [
-      group({
-        content: textBox({
-          value: "",
-          placeholder: "Type something...",
-        }),
-        legend: "Group!",
-      })
-    ],
-    [
-      para({
-        text: "This is a paragraph with dynamic font size.",
-      })
-    ],
-    [
-      radioButton({
+function textToNumber(text: string): number | ParseError {
+  if (!validator.isFloat(text.trim())) {
+    return new ParseError("Invalid number")
+  }
+  return parseFloat(text)
+}
+
+const value = cell(10)
+
+const item1 = uiH1('Title!')
+const item2 = uiPara({
+  content: ["Hello from MyUIApp!"],
+})
+const item3 = uiGroup({
+  content: uiPara({
+    content: [
+      uiTextBox({
+        text: "",
+        placeholder: "Type something...",
+      }),
+      uiRadioButton({
         group: "radio",
         checked: (value?: boolean) => {
           if (value === undefined) {
@@ -46,27 +43,44 @@ const piece = grid({
             return value
           }
         }
-      })
-    ],
-    [
-      radioButton({
+      }),
+      uiRadioButton({
         group: "radio",
         checked: (value?: boolean) => {
           if (value === undefined) {
             return !selected()
           } else {
             selected(!value)
-            return value
+            return !value
           }
         }
+      }),
+      uiCheckBox({
+        checked: selected
+      }),
+      uiParsedTextBox({
+        value: value,
+        toText: (value: number) => value.toString(),
+        fromText: textToNumber,
+        placeholder: "Enter a number",
+        live: true,
       })
     ],
-    [
-      checkBox({
-        checked: selected
-      })
-    ]
-  ],
+  }),
+  legend: "Group!",
 })
 
-const app = new UIApp("#app", piece)
+const allItems = [
+  item1,
+  item2,
+  item3,
+]
+
+const piece = uiGrid({
+  items: allItems.map(x => [x]),
+  gap: "10px",
+  columns: ["auto"],
+  rows: allItems.map(() => "auto"),
+})
+
+const _ = new UIApp("#app", piece)
