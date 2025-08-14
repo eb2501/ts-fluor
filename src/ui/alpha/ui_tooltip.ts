@@ -2,7 +2,7 @@ import { node, type Get, OneWayPipe, attach } from "../../core"
 import { toGet, type ToGet } from "../convert"
 import { UIElement, type UIType } from "../ui_element"
 
-class UITooltipElement<T extends UIType> extends UIElement<T> {
+class UITooltip<T extends UIType> extends UIElement<T> {
   private readonly tooltip: Get<string>
   private readonly content: Get<UIElement<T>>
 
@@ -86,7 +86,7 @@ export interface UITooltipArgs<T extends UIType> {
 export function uiTooltip<T extends UIType>(
   args: UITooltipArgs<T>
 ): UIElement<T> {
-  return new UITooltipElement(
+  return new UITooltip(
     toGet(args.tooltip),
     toGet(args.content)
   )

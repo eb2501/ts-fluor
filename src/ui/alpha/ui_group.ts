@@ -2,7 +2,7 @@ import { UIBlockElement, type UIElement } from "../ui_element"
 import { attach, node, OneWayPipe, type Get } from "../../core"
 import { toGet, type ToGet } from "../convert"
 
-class UIGroupElement extends UIBlockElement {
+class UIGroup extends UIBlockElement {
   private readonly content: Get<UIElement<"block">>
   private readonly legend: Get<string>
 
@@ -81,7 +81,7 @@ export interface UIGroupArgs {
 }
 
 export function uiGroup(args: UIGroupArgs): UIBlockElement {
-  return new UIGroupElement(
+  return new UIGroup(
     toGet(args.content),
     toGet(args.legend)
   )

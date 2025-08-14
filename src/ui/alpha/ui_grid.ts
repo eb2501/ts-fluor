@@ -5,7 +5,7 @@ import { UIBlockElement, UIElement } from "../ui_element"
 
 export type GridSize = Size | `${number}fr` | "auto"
 
-class UIGridElement extends UIBlockElement {
+class UIGrid extends UIBlockElement {
   private readonly items: Get<UIElement<"block">[][]>
   private readonly rows: Get<GridSize[]>
   private readonly columns: Get<GridSize[]>
@@ -130,7 +130,7 @@ export interface UIGridArgs {
 }
 
 export function uiGrid(args: UIGridArgs): UIElement<"block"> {
-  return new UIGridElement(
+  return new UIGrid(
     toGet(args.items),
     toGet(args.rows),
     toGet(args.columns),

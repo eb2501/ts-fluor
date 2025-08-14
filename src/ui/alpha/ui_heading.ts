@@ -4,7 +4,7 @@ import { UIBlockElement } from "../ui_element"
 
 export type UIHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
 
-class UIHeadingElement extends UIBlockElement {
+class UIHeading extends UIBlockElement {
   private readonly text: Get<string>
   private readonly level: UIHeadingLevel
 
@@ -42,25 +42,25 @@ class UIHeadingElement extends UIBlockElement {
 ///////
 
 export function uiH1(text: ToGet<string>): UIBlockElement {
-  return new UIHeadingElement(toGet(text), 1)
+  return new UIHeading(toGet(text), 1)
 }
 
 export function uiH2(text: ToGet<string>): UIBlockElement {
-  return new UIHeadingElement(toGet(text), 2)
+  return new UIHeading(toGet(text), 2)
 }
 
 export function uiH3(text: ToGet<string>): UIBlockElement {
-  return new UIHeadingElement(toGet(text), 3)
+  return new UIHeading(toGet(text), 3)
 }
 
 export function uiH4(text: ToGet<string>): UIBlockElement {
-  return new UIHeadingElement(toGet(text), 4)
+  return new UIHeading(toGet(text), 4)
 }
 
 export function uiH5(text: ToGet<string>): UIBlockElement {
-  return new UIHeadingElement(toGet(text), 5)
+  return new UIHeading(toGet(text), 5)
 }
 
 export function uiH6(text: ToGet<string>): UIBlockElement {
-  return new UIHeadingElement(toGet(text), 6)
+  return new UIHeading(toGet(text), 6)
 }

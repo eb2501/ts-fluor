@@ -4,8 +4,13 @@ import { OneWayPipe, TwoWayPipe } from '../../core/pipe'
 import { attach } from '../../core/attach'
 import { node, type Get, type Mem } from '../../core'
 import { toGet, toMem, type ToGet, type ToMem } from '../convert'
+import { type UILabelTargetMixin } from './ui_label'
+import { newId } from '../id_gen'
 
-class UITextBoxElement extends UIInlineElement {
+class UITextBox
+  extends UIInlineElement
+  implements UILabelTargetMixin
+{
   private readonly live: boolean
   private readonly placeholder: Get<string>
   private readonly text: Mem<string>
@@ -21,8 +26,13 @@ class UITextBoxElement extends UIInlineElement {
     this.text = text
   }
 
+  readonly id = node(() => {
+    return newId().toString()
+  })
+
   readonly html = node(() => {
     const input = document.createElement('input')
+    input.id = this.id()
     input.className = 'fluor-uiTextBox'
     input.type = 'text'
 
@@ -73,8 +83,8 @@ export interface UITextBoxArgs {
   text: ToMem<string>
 }
 
-export function uiTextBox(args: UITextBoxArgs): UIInlineElement {
-  return new UITextBoxElement(
+export function uiTextBox(args: UITextBoxArgs): UIInlineElement & UILabelTargetMixin {
+  return new UITextBox(
     args.live ?? false,
     toGet(args.placeholder ?? ""),
     toMem(args.text),

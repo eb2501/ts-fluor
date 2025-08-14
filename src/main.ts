@@ -8,23 +8,17 @@ import { uiPara } from './ui/alpha/ui_para'
 import { uiRadioButton } from './ui/alpha/ui_radio_btn'
 import { uiTextBox } from './ui/alpha/ui_text_box'
 
-import validator from 'validator'
-import { ParseError, uiParsedTextBox } from './ui/beta/ui_parsed_tb'
+import { uiNumberTextBox } from './ui/beta/ui_parsed_tb'
+import { uiText } from './ui/alpha/ui_text'
+import { View } from './example/temperature'
 
 const selected = cell(true)
-
-function textToNumber(text: string): number | ParseError {
-  if (!validator.isFloat(text.trim())) {
-    return new ParseError("Invalid number")
-  }
-  return parseFloat(text)
-}
 
 const value = cell(10)
 
 const item1 = uiH1('Title!')
 const item2 = uiPara({
-  content: ["Hello from MyUIApp!"],
+  content: [uiText({content: "Hello from MyUIApp!"})],
 })
 const item3 = uiGroup({
   content: uiPara({
@@ -58,10 +52,8 @@ const item3 = uiGroup({
       uiCheckBox({
         checked: selected
       }),
-      uiParsedTextBox({
+      uiNumberTextBox({
         value: value,
-        toText: (value: number) => value.toString(),
-        fromText: textToNumber,
         placeholder: "Enter a number",
         live: true,
       })
@@ -83,4 +75,6 @@ const piece = uiGrid({
   rows: allItems.map(() => "auto"),
 })
 
-const _ = new UIApp("#app", piece)
+// const _ = new UIApp("#app", piece)
+
+const _ = new UIApp("#app", new View())

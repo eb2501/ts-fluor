@@ -2,7 +2,7 @@ import { UIElement, type UIType } from "../ui_element"
 import { node, type Get, attach, OneWayPipe } from "../../core"
 import { toGet, type ToGet } from "../convert"
 
-class UIClassesElement<T extends UIType> extends UIElement<T> {
+class UIClasses<T extends UIType> extends UIElement<T> {
   private readonly content: Get<UIElement<T>>
   private readonly classes: Get<string[]>
 
@@ -80,7 +80,7 @@ export interface UIClassesArgs<T extends UIType> {
 export function uiClasses<T extends UIType>(
   args: UIClassesArgs<T>
 ): UIElement<T> {
-  return new UIClassesElement(
+  return new UIClasses(
     toGet(args.content),
     toGet(args.classes)
   )

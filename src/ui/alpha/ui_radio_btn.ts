@@ -1,8 +1,13 @@
 import { node, type Mem, tracker, attach, TwoWayPipe } from "../../core"
 import { toMem, type ToMem } from "../convert"
+import { newId } from "../id_gen"
 import { UIInlineElement } from "../ui_element"
+import { type UILabelTargetMixin } from "./ui_label"
 
-class UIRadioButtonElement extends UIInlineElement {
+class UIRadioButton
+  extends UIInlineElement
+  implements UILabelTargetMixin
+{
   private readonly checked: Mem<boolean>
   private readonly group: string
 
@@ -15,8 +20,13 @@ class UIRadioButtonElement extends UIInlineElement {
     this.group = group
   }
 
+  readonly id = node(() => {
+    return newId().toString()
+  })
+
   readonly html = node(() => {
     const input = document.createElement("input")
+    input.id = this.id()
     input.className = "fluor-uiRadioButton"
     input.name = this.group
     input.type = "radio"
@@ -46,8 +56,8 @@ export interface UIRadioButtonArgs {
   group: string,
 }
 
-export function uiRadioButton(args: UIRadioButtonArgs): UIInlineElement {
-  return new UIRadioButtonElement(
+export function uiRadioButton(args: UIRadioButtonArgs): UIInlineElement & UILabelTargetMixin {
+  return new UIRadioButton(
     toMem(args.checked),
     args.group,
   )
