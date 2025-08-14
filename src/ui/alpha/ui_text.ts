@@ -3,22 +3,18 @@ import { toGet, type ToGet } from "../convert"
 import { UIBlockElement, UIElement, UIInlineElement } from "../ui_element"
 
 class UIText extends UIInlineElement {
-  private readonly content: Get<string>
+  private readonly text: Get<string>
 
-  constructor(content: Get<string>) {
+  constructor(text: Get<string>) {
     super()
-    this.content = content
+    this.text = text
   }
 
   readonly html = node(() => {
     const span = document.createElement("span")
     span.className = "fluor-uiText"
 
-    //
-    // Content
-    //
-
-    const contentTarget = (value?: string) => {
+    const textTarget = (value?: string) => {
       if (value === undefined) {
         return span.textContent
       } else {
@@ -30,8 +26,8 @@ class UIText extends UIInlineElement {
     attach(
       span,
       new OneWayPipe(
-        this.content,
-        contentTarget,
+        this.text,
+        textTarget,
       )
     )
 
@@ -42,9 +38,9 @@ class UIText extends UIInlineElement {
 ///////
 
 export interface UITextArgs {
-  content: ToGet<string>
+  text: ToGet<string>
 }
 
 export function uiText(args: UITextArgs): UIText {
-  return new UIText(toGet(args.content))
+  return new UIText(toGet(args.text))
 }

@@ -20,3 +20,33 @@ export abstract class UIInlineElement extends UIElement<"inline"> {
     return "inline"
   }
 }
+
+///////
+
+export abstract class UIMonoContentElement<T extends UIType> extends UIElement<T> {
+  protected readonly content: UIElement<T>
+
+  constructor(content: UIElement<T>) {
+    super()
+    this.content = content
+  }
+
+  type(): T {
+    return this.content.type()
+  }
+}
+
+///////
+
+export abstract class UIMultiContentElement<T extends UIType> extends UIElement<T> {
+  protected readonly contents: UIElement<T>[]
+
+  constructor(contents: UIElement<T>[]) {
+    super()
+    this.contents = contents
+  }
+
+  type(): T {
+    return this.contents[0].type()
+  }
+}

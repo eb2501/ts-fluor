@@ -99,7 +99,7 @@ class UIParsedTextBox<T>
     return uiTooltip({
       content: uiClasses({
         classes: this.classes,
-        content: this.textBox,
+        content: this.textBox(),
       }),
       tooltip: this.tooltip,
     })

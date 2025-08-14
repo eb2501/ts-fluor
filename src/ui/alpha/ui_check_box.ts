@@ -27,10 +27,6 @@ class UICheckBox
     input.className = "fluor-uiCheckBox"
     input.type = "checkbox"
 
-    //
-    // Checked
-    //
-
     const checkedTarget = tracker(
       input.checked,
       (value: boolean) => input.checked = value,

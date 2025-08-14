@@ -14,10 +14,6 @@ class UIPara extends UIBlockElement {
     const p = document.createElement("p")
     p.className = "fluor-uiPara"
 
-    //
-    // Children
-    //
-
     const childrenSource = () => {
       const array: Node[] = []
       for (const item of this.content()) {

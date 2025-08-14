@@ -84,11 +84,11 @@ export class View extends UIComponent<"block"> {
     items: () => [
       [
         uiPara({content: [this.celsiusPart()]}),
-        uiPara({content: [uiText({content: "Celsius"})]})
+        uiPara({content: [uiText({text: "Celsius"})]})
       ],
       [
         uiPara({content: [this.fahrenheitPart()]}),
-        uiPara({content: [uiText({content: "Fahrenheit"})]})
+        uiPara({content: [uiText({text: "Fahrenheit"})]})
       ]
     ]
   }))
@@ -103,7 +103,7 @@ export class View extends UIComponent<"block"> {
   })
 
   private readonly outputPart = node(() => uiPara({
-    content: [uiText({content: this.outputText})]
+    content: [uiText({text: this.outputText})]
   }))
 
   readonly element = node(() => uiGrid({

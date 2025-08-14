@@ -5,13 +5,13 @@ import { UIBlockElement } from "../ui_element"
 export type UIHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
 
 class UIHeading extends UIBlockElement {
-  private readonly text: Get<string>
   private readonly level: UIHeadingLevel
+  private readonly text: Get<string>
 
-  constructor(text: Get<string>, level: UIHeadingLevel) {
+  constructor(level: UIHeadingLevel, text: Get<string>) {
     super()
-    this.text = text
     this.level = level
+    this.text = text
   }
 
   readonly html = node(() => {
@@ -42,25 +42,25 @@ class UIHeading extends UIBlockElement {
 ///////
 
 export function uiH1(text: ToGet<string>): UIBlockElement {
-  return new UIHeading(toGet(text), 1)
+  return new UIHeading(1, toGet(text))
 }
 
 export function uiH2(text: ToGet<string>): UIBlockElement {
-  return new UIHeading(toGet(text), 2)
+  return new UIHeading(2, toGet(text))
 }
 
 export function uiH3(text: ToGet<string>): UIBlockElement {
-  return new UIHeading(toGet(text), 3)
+  return new UIHeading(3, toGet(text))
 }
 
 export function uiH4(text: ToGet<string>): UIBlockElement {
-  return new UIHeading(toGet(text), 4)
+  return new UIHeading(4, toGet(text))
 }
 
 export function uiH5(text: ToGet<string>): UIBlockElement {
-  return new UIHeading(toGet(text), 5)
+  return new UIHeading(5, toGet(text))
 }
 
 export function uiH6(text: ToGet<string>): UIBlockElement {
-  return new UIHeading(toGet(text), 6)
+  return new UIHeading(6, toGet(text))
 }

@@ -1,32 +1,22 @@
 import { node, type Get, OneWayPipe, attach } from "../../core"
 import { toGet, type ToGet } from "../convert"
-import { UIElement, type UIType } from "../ui_element"
+import { UIElement, UIMonoContentElement, type UIType } from "../ui_element"
 
-class UITooltip<T extends UIType> extends UIElement<T> {
+class UITooltip<T extends UIType> extends UIMonoContentElement<T> {
   private readonly tooltip: Get<string>
-  private readonly content: Get<UIElement<T>>
 
   constructor(
+    content: UIElement<T>,
     tooltip: Get<string>,
-    content: Get<UIElement<T>>
   ) {
-    super()
+    super(content)
     this.tooltip = tooltip
-    this.content = content
   }
 
-  type(): T {
-    return this.content().type()
-  }
-  
   readonly html = node(() => {
     const tag = this.type() === "block" ? "div" : "span"
     const html = document.createElement(tag)
     html.className = 'fluor-uiTooltip'
-
-    //
-    // Tooltip
-    //
 
     const tooltipTarget = (value? : string) => {
       if (value === undefined) {
@@ -49,29 +39,7 @@ class UITooltip<T extends UIType> extends UIElement<T> {
       )
     )
 
-    //
-    // Content
-    //
-
-    const childrenSource = () => [this.content().html()]
-
-    const childrenTarget = (value?: HTMLElement[]) => {
-      if (value === undefined) {
-        return Array.from(html.children).map(c => c as HTMLElement)
-      } else {
-        html.replaceChildren(...value)
-        return value
-      }
-    }
-
-    attach(
-      html,
-      new OneWayPipe(
-        childrenSource,
-        childrenTarget
-      )
-    )
-
+    html.appendChild(this.content.html())
     return html
   })
 }
@@ -79,15 +47,15 @@ class UITooltip<T extends UIType> extends UIElement<T> {
 ///////
 
 export interface UITooltipArgs<T extends UIType> {
+  content: UIElement<T>
   tooltip: ToGet<string>
-  content: ToGet<UIElement<T>>
 }
 
 export function uiTooltip<T extends UIType>(
   args: UITooltipArgs<T>
 ): UIElement<T> {
   return new UITooltip(
-    toGet(args.tooltip),
-    toGet(args.content)
+    args.content,
+    toGet(args.tooltip)
   )
 }

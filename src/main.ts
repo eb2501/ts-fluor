@@ -10,7 +10,6 @@ import { uiTextBox } from './ui/alpha/ui_text_box'
 
 import { uiNumberTextBox } from './ui/beta/ui_parsed_tb'
 import { uiText } from './ui/alpha/ui_text'
-import { View } from './example/temperature'
 
 const selected = cell(true)
 
@@ -18,7 +17,7 @@ const value = cell(10)
 
 const item1 = uiH1('Title!')
 const item2 = uiPara({
-  content: [uiText({content: "Hello from MyUIApp!"})],
+  content: [uiText({text: "Hello from MyUIApp!"})],
 })
 const item3 = uiGroup({
   content: uiPara({
@@ -69,12 +68,11 @@ const allItems = [
 ]
 
 const piece = uiGrid({
-  items: allItems.map(x => [x]),
-  gap: "10px",
+  items: allItems,
   columns: ["auto"],
   rows: allItems.map(() => "auto"),
 })
 
-// const _ = new UIApp("#app", piece)
+const _ = new UIApp("#app", piece)
 
-const _ = new UIApp("#app", new View())
+// const _ = new UIApp("#app", new View())

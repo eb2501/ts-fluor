@@ -1,17 +1,15 @@
-import { UIBlockElement, type UIElement } from "../ui_element"
+import { UIBlockElement, UIMonoContentElement, type UIElement } from "../ui_element"
 import { attach, node, OneWayPipe, type Get } from "../../core"
 import { toGet, type ToGet } from "../convert"
 
-class UIGroup extends UIBlockElement {
-  private readonly content: Get<UIElement<"block">>
+class UIGroup extends UIMonoContentElement<"block"> {
   private readonly legend: Get<string>
 
   constructor(
-    content: Get<UIElement<"block">>,
+    content: UIElement<"block">,
     legend: Get<string>,
   ) {
-    super()
-    this.content = content
+    super(content)
     this.legend = legend
   }
 
@@ -21,10 +19,6 @@ class UIGroup extends UIBlockElement {
 
     const legend = document.createElement("legend")
     fieldset.appendChild(legend)
-
-    //
-    // Legend
-    //
 
     const legendTarget = (value?: string) => {
       if (value === undefined) {
@@ -43,32 +37,7 @@ class UIGroup extends UIBlockElement {
       )
     )
     
-    const div = document.createElement("div")
-    fieldset.appendChild(div)
-
-    //
-    // Content
-    //
-
-    const childrenSource = () => [this.content().html()]
-
-    const childrenTarget = (value?: HTMLElement[]) => {
-      if (value === undefined) {
-        return Array.from(div.children).map(c => c as HTMLElement)
-      } else {
-        div.replaceChildren(...value)
-        return value
-      }
-    }
-
-    attach(
-      div,
-      new OneWayPipe(
-        childrenSource,
-        childrenTarget
-      )
-    )
-
+    fieldset.appendChild(this.content.html())
     return fieldset
   })
 }
@@ -76,13 +45,13 @@ class UIGroup extends UIBlockElement {
 ///////
 
 export interface UIGroupArgs {
-  content: ToGet<UIElement<"block">>,
+  content: UIElement<"block">,
   legend: ToGet<string>,
 }
 
 export function uiGroup(args: UIGroupArgs): UIBlockElement {
   return new UIGroup(
-    toGet(args.content),
+    args.content,
     toGet(args.legend)
   )
 }

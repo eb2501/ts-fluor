@@ -22,10 +22,6 @@ class UILabel extends UIInlineElement {
     const label = document.createElement("label")
     label.htmlFor = this.target.id()
 
-    //
-    // Text
-    //
-
     const textTarget = (value?: string) => {
       if (value === undefined) {
         return label.textContent
