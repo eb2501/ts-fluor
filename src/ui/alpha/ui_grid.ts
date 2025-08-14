@@ -1,7 +1,6 @@
-import { type Get, attach, node, OneWayPipe } from "../../core"
+import { node } from "../../core"
 import { type Size } from "../common"
-import { toGet, type ToGet } from "../convert"
-import { UIBlockElement, UIElement, UIMultiContentElement } from "../ui_element"
+import { UIElement, UIMultiContentElement } from "../ui_element"
 
 export type GridSize = Size | `${number}fr` | "auto"
 
@@ -32,16 +31,14 @@ class UIGrid extends UIMultiContentElement<"block"> {
 
 ///////
 
-export interface UIGridArgs {
-  content: UIElement<"block">[]
-  rows: GridSize[]
-  columns: GridSize[]
-}
-
-export function uiGrid(args: UIGridArgs): UIElement<"block"> {
+export function uiGrid(
+  content: UIElement<"block">[],
+  rows: GridSize[],
+  columns: GridSize[],
+): UIElement<"block"> {
   return new UIGrid(
-    args.content,
-    args.rows,
-    args.columns,
+    content,
+    rows,
+    columns,
   )
 }

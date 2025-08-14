@@ -40,16 +40,12 @@ class UIClasses<T extends UIType> extends UIMonoContentElement<T> {
 
 ///////
 
-export interface UIClassesArgs<T extends UIType> {
-  content: UIElement<T>
-  classes: ToGet<string[]>
-}
-
 export function uiClasses<T extends UIType>(
-  args: UIClassesArgs<T>
+  content: UIElement<T>,
+  classes: ToGet<string[]>
 ): UIElement<T> {
   return new UIClasses(
-    args.content,
-    toGet(args.classes)
+    content,
+    toGet(classes)
   )
 }

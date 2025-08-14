@@ -44,14 +44,12 @@ class UIGroup extends UIMonoContentElement<"block"> {
 
 ///////
 
-export interface UIGroupArgs {
+export function uiGroup(
   content: UIElement<"block">,
-  legend: ToGet<string>,
-}
-
-export function uiGroup(args: UIGroupArgs): UIBlockElement {
+  legend: ToGet<string>
+): UIBlockElement {
   return new UIGroup(
-    args.content,
-    toGet(args.legend)
+    content,
+    toGet(legend)
   )
 }

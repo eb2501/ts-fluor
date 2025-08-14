@@ -41,23 +41,23 @@ class UIParsedTextBox<T>
   implements UILabelTargetMixin, UIValidMixin
 {
   private readonly live: boolean
+  private readonly placeholder: Get<string>
   private readonly toText: (value: T) => string
   private readonly fromText: (text: string) => T | ParseError
-  private readonly placeholder: Get<string>
   private readonly value: Mem<T>
 
   constructor(
     live: boolean,
+    placeholder: Get<string>,
     toText: (value: T) => string,
     fromText: (text: string) => T | ParseError,
-    placeholder: Get<string>,
     value: Mem<T>
   ) {
     super("uiParsedTextBox")
     this.live = live
+    this.placeholder = placeholder
     this.toText = toText
     this.fromText = fromText
-    this.placeholder = placeholder
     this.value = value
   }
 
@@ -89,21 +89,19 @@ class UIParsedTextBox<T>
 
   private readonly tooltip = () => this.unparsed()?.error ?? ""
 
-  private readonly textBox = node(() => uiTextBox({
-    live: this.live,
-    placeholder: this.placeholder,
-    text: this.text,
-  }))
+  private readonly textBox = node(() => uiTextBox(
+    this.live,
+    this.placeholder,
+    this.text,
+  ))
 
-  readonly element = node(() => {
-    return uiTooltip({
-      content: uiClasses({
-        classes: this.classes,
-        content: this.textBox(),
-      }),
-      tooltip: this.tooltip,
-    })
-  })
+  readonly element = node(() => uiTooltip(
+    uiClasses(
+      this.textBox(),
+      this.classes,
+    ),
+    this.tooltip,
+  ))
 
   readonly valid = () => this.unparsed() === null
 
@@ -112,23 +110,19 @@ class UIParsedTextBox<T>
 
 ///////
 
-export interface UIParsedTextBoxArgs<T> {
-  live?: boolean
-  toText: (value: T) => string
-  fromText: (text: string) => T | ParseError
-  placeholder?: ToGet<string>
-  value: ToMem<T>
-}
-
 export function uiParsedTextBox<T>(
-  args: UIParsedTextBoxArgs<T>
+  live: boolean,
+  placeholder: ToGet<string>,
+  toText: (value: T) => string,
+  fromText: (text: string) => T | ParseError,
+  value: ToMem<T>
 ): UIElement<"inline"> & UILabelTargetMixin & UIValidMixin {
   return new UIParsedTextBox(
-    args.live ?? false,
-    args.toText,
-    args.fromText,
-    toGet(args.placeholder ?? ""),
-    toMem(args.value),
+    live,
+    toGet(placeholder),
+    toText,
+    fromText,
+    toMem(value),
   )
 }
 
@@ -141,18 +135,16 @@ function textToNumber(text: string): number | ParseError {
   return parseFloat(text)
 }
 
-export interface UIValueTextBoxArgs<T> {
-  live?: boolean
-  placeholder?: ToGet<string>
-  value: ToMem<T>
-}
-
-export function uiNumberTextBox(args: UIValueTextBoxArgs<number>) {
-  return uiParsedTextBox({
-    live: args.live,
-    placeholder: args.placeholder,
-    toText: (value) => value.toString(),
-    fromText: textToNumber,
-    value: args.value
-  })
+export function uiNumberTextBox(
+  live: boolean,
+  placeholder: ToGet<string>,
+  value: ToMem<number>
+) {
+  return uiParsedTextBox(
+    live,
+    placeholder,
+    (value) => value.toString(),
+    textToNumber,
+    value
+  )
 }

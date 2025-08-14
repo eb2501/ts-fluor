@@ -45,10 +45,8 @@ class UIPara extends UIBlockElement {
 
 ///////
 
-export interface UIParaArgs {
+export function uiPara(
   content: ToGet<UIElement<"inline">[]>
-}
-
-export function uiPara(args: UIParaArgs): UIBlockElement {
-  return new UIPara(toGet(args.content))
+): UIBlockElement {
+  return new UIPara(toGet(content))
 }

@@ -41,15 +41,15 @@ export class View extends UIComponent<"block"> {
 
   readonly model = cell<Model>(new Model())
 
-  private readonly inputPart = node(() => uiNumberTextBox({
-    live: true,
-    placeholder: "Enter temperature",
-    value: this.model().sourceValue
-  }))
+  private readonly inputPart = node(() => uiNumberTextBox(
+    true,
+    "Enter temperature",
+    node(() => this.model().sourceValue())
+  ))
 
-  private readonly leftPart = node(() => uiPara({
-    content: [this.inputPart()]
-  }))
+  private readonly leftPart = node(() => uiPara(
+    [this.inputPart()]
+  ))
 
   private readonly celsiusChecked = (value?: boolean) => {
     if (value === undefined) {
@@ -60,9 +60,9 @@ export class View extends UIComponent<"block"> {
     }
   }
 
-  private readonly celsiusPart = node(() => uiCheckBox({
-    checked: this.celsiusChecked,
-  }))
+  private readonly celsiusPart = node(() => uiCheckBox(
+    this.celsiusChecked,
+  ))
 
   private readonly fahrenheitChecked = (value?: boolean) => {
     if (value === undefined) {
@@ -73,20 +73,20 @@ export class View extends UIComponent<"block"> {
     }
   }
 
-  private readonly fahrenheitPart = node(() => uiCheckBox({
-    checked: this.fahrenheitChecked,
-  }))
+  private readonly fahrenheitPart = node(() => uiCheckBox(
+    this.fahrenheitChecked
+  ))
 
-  private readonly selectPart = node(() => uiGrid({
-    rows: ["auto", "auto"],
-    columns: ["auto", "auto"],
-    content: [
-      uiPara({content: [this.celsiusPart()]}),
-      uiPara({content: [uiText({text: "Celsius"})]}),
-      uiPara({content: [this.fahrenheitPart()]}),
-      uiPara({content: [uiText({text: "Fahrenheit"})]})
-    ]
-  }))
+  private readonly selectPart = node(() => uiGrid(
+    [
+      uiPara([this.celsiusPart()]),
+      uiPara([uiText("Celsius")]),
+      uiPara([this.fahrenheitPart()]),
+      uiPara([uiText("Fahrenheit")])
+    ],
+    ["auto", "auto"],
+    ["auto", "auto"],
+  ))
 
   private readonly outputText = node(() => {
     if (this.inputPart().valid()) {
@@ -97,17 +97,17 @@ export class View extends UIComponent<"block"> {
     }
   })
 
-  private readonly outputPart = node(() => uiPara({
-    content: [uiText({text: this.outputText})]
-  }))
+  private readonly outputPart = node(() => uiPara(
+    [uiText(this.outputText())]
+  ))
 
-  readonly element = node(() => uiGrid({
-    rows: ["auto"],
-    columns: ["auto", "auto", "auto"],
-    content: [
+  readonly element = node(() => uiGrid(
+    [
       this.leftPart(),
       this.selectPart(),
       this.outputPart()
-    ]
-  }))
+    ],
+    ["auto"],
+    ["auto", "auto", "auto"],
+  ))
 }

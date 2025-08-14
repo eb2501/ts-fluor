@@ -1,6 +1,6 @@
 import { attach, node, OneWayPipe, type Get } from "../../core"
 import { toGet, type ToGet } from "../convert"
-import { UIBlockElement, UIElement, UIInlineElement } from "../ui_element"
+import { UIInlineElement } from "../ui_element"
 
 class UIText extends UIInlineElement {
   private readonly text: Get<string>
@@ -37,10 +37,6 @@ class UIText extends UIInlineElement {
 
 ///////
 
-export interface UITextArgs {
-  text: ToGet<string>
-}
-
-export function uiText(args: UITextArgs): UIText {
-  return new UIText(toGet(args.text))
+export function uiText(text: ToGet<string>): UIText {
+  return new UIText(toGet(text))
 }

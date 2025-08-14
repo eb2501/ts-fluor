@@ -17,50 +17,45 @@ const selected = cell(true)
 const value = cell(10)
 
 const item1 = uiH1('Title!')
-const item2 = uiPara({
-  content: [uiText({text: "Hello from MyUIApp!"})],
-})
-const item3 = uiGroup({
-  content: uiPara({
-    content: [
-      uiTextBox({
-        text: "",
-        placeholder: "Type something...",
-      }),
-      uiRadioButton({
-        group: "radio",
-        checked: (value?: boolean) => {
-          if (value === undefined) {
-            return selected()
-          } else {
-            selected(value)
-            return value
-          }
+const item2 = uiPara([uiText("Hello from MyUIApp!")])
+const item3 = uiGroup(
+  uiPara([
+    uiTextBox(
+      false,
+      "Type something...",
+      "",
+    ),
+    uiRadioButton(
+      "radio",
+      (value?: boolean) => {
+        if (value === undefined) {
+          return selected()
+        } else {
+          selected(value)
+          return value
         }
-      }),
-      uiRadioButton({
-        group: "radio",
-        checked: (value?: boolean) => {
-          if (value === undefined) {
-            return !selected()
-          } else {
-            selected(!value)
-            return !value
-          }
+      }
+    ),
+    uiRadioButton(
+      "radio",
+      (value?: boolean) => {
+        if (value === undefined) {
+          return !selected()
+        } else {
+          selected(!value)
+          return !value
         }
-      }),
-      uiCheckBox({
-        checked: selected
-      }),
-      uiNumberTextBox({
-        value: value,
-        placeholder: "Enter a number",
-        live: true,
-      })
-    ],
-  }),
-  legend: "Group!",
-})
+      }
+    ),
+    uiCheckBox(selected),
+    uiNumberTextBox(
+      true,
+      "Enter a number",
+      value
+    )
+  ]),
+  "Group!",
+)
 
 const allItems = [
   item1,
@@ -68,12 +63,12 @@ const allItems = [
   item3,
 ]
 
-const piece = uiGrid({
-  content: allItems,
-  columns: ["auto"],
-  rows: allItems.map(() => "auto"),
-})
+const piece = uiGrid(
+  allItems,
+  allItems.map(() => "auto"),
+  ["auto"],
+)
 
-// const _ = new UIApp("#app", piece)
+const _ = new UIApp("#app", piece)
 
-const _ = new UIApp("#app", new View())
+// const _ = new UIApp("#app", new View())

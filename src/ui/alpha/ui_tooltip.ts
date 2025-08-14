@@ -46,16 +46,12 @@ class UITooltip<T extends UIType> extends UIMonoContentElement<T> {
 
 ///////
 
-export interface UITooltipArgs<T extends UIType> {
-  content: UIElement<T>
-  tooltip: ToGet<string>
-}
-
 export function uiTooltip<T extends UIType>(
-  args: UITooltipArgs<T>
+  content: UIElement<T>,
+  tooltip: ToGet<string>
 ): UIElement<T> {
   return new UITooltip(
-    args.content,
-    toGet(args.tooltip)
+    content,
+    toGet(tooltip)
   )
 }

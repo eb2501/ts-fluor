@@ -8,16 +8,16 @@ class UIRadioButton
   extends UIInlineElement
   implements UILabelTargetMixin
 {
-  private readonly checked: Mem<boolean>
   private readonly group: string
+  private readonly checked: Mem<boolean>
 
   constructor(
-    checked: Mem<boolean>,
     group: string,
+    checked: Mem<boolean>,
   ) {
     super()
-    this.checked = checked
     this.group = group
+    this.checked = checked
   }
 
   readonly id = node(() => {
@@ -51,14 +51,12 @@ class UIRadioButton
 
 ///////
 
-export interface UIRadioButtonArgs {
-  checked: ToMem<boolean>,
+export function uiRadioButton(
   group: string,
-}
-
-export function uiRadioButton(args: UIRadioButtonArgs): UIInlineElement & UILabelTargetMixin {
+  checked: ToMem<boolean>,
+): UIInlineElement & UILabelTargetMixin {
   return new UIRadioButton(
-    toMem(args.checked),
-    args.group,
+    group,
+    toMem(checked),
   )
 }

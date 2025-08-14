@@ -9,6 +9,20 @@ export abstract class UIElement<T extends UIType> {
 
 ///////
 
+export function isInline(element: unknown): element is UIElement<"inline"> {
+  return (typeof element == "object")
+      && (element instanceof UIElement)
+      && (element.type() === "inline")
+}
+
+export function isBlock(element: unknown): element is UIElement<"block"> {
+  return (typeof element == "object")
+      && (element instanceof UIElement)
+      && (element.type() === "block")
+}
+
+///////
+
 export abstract class UIBlockElement extends UIElement<"block"> {
   type(): "block" {
     return "block"

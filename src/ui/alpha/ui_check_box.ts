@@ -47,12 +47,8 @@ class UICheckBox
 
 ///////
 
-export interface UICheckBoxArgs {
-  checked: ToMem<boolean>
-}
-
-export function uiCheckBox(args: UICheckBoxArgs): UIInlineElement & UILabelTargetMixin {
+export function uiCheckBox(checked: ToMem<boolean>): UIInlineElement & UILabelTargetMixin {
   return new UICheckBox(
-    toMem(args.checked)
+    toMem(checked)
   )
 }

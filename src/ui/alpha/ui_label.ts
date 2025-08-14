@@ -45,14 +45,12 @@ class UILabel extends UIInlineElement {
 
 ///////
 
-export type UILabelArgs = {
+export function uiLabel(
   target: UILabelTargetMixin,
   text: ToGet<string>
-}
-
-export function uiLabel(args: UILabelArgs): UIInlineElement {
+): UIInlineElement {
   return new UILabel(
-    args.target,
-    toGet(args.text)
+    target,
+    toGet(text)
   )
 }

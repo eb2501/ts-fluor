@@ -77,16 +77,14 @@ class UITextBox
 
 ///////
 
-export interface UITextBoxArgs {
-  live?: boolean
-  placeholder?: ToGet<string>
+export function uiTextBox(
+  live: boolean,
+  placeholder: ToGet<string>,
   text: ToMem<string>
-}
-
-export function uiTextBox(args: UITextBoxArgs): UIInlineElement & UILabelTargetMixin {
+): UIInlineElement & UILabelTargetMixin {
   return new UITextBox(
-    args.live ?? false,
-    toGet(args.placeholder ?? ""),
-    toMem(args.text),
+    live,
+    toGet(placeholder),
+    toMem(text)
   )
 }
