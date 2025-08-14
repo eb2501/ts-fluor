@@ -33,14 +33,14 @@ class UIGrid extends UIMultiContentElement<"block"> {
 ///////
 
 export interface UIGridArgs {
-  items: UIElement<"block">[]
+  content: UIElement<"block">[]
   rows: GridSize[]
   columns: GridSize[]
 }
 
 export function uiGrid(args: UIGridArgs): UIElement<"block"> {
   return new UIGrid(
-    args.items,
+    args.content,
     args.rows,
     args.columns,
   )

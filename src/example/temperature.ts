@@ -80,16 +80,11 @@ export class View extends UIComponent<"block"> {
   private readonly selectPart = node(() => uiGrid({
     rows: ["auto", "auto"],
     columns: ["auto", "auto"],
-    gap: "4px",
-    items: () => [
-      [
-        uiPara({content: [this.celsiusPart()]}),
-        uiPara({content: [uiText({text: "Celsius"})]})
-      ],
-      [
-        uiPara({content: [this.fahrenheitPart()]}),
-        uiPara({content: [uiText({text: "Fahrenheit"})]})
-      ]
+    content: [
+      uiPara({content: [this.celsiusPart()]}),
+      uiPara({content: [uiText({text: "Celsius"})]}),
+      uiPara({content: [this.fahrenheitPart()]}),
+      uiPara({content: [uiText({text: "Fahrenheit"})]})
     ]
   }))
 
@@ -109,11 +104,10 @@ export class View extends UIComponent<"block"> {
   readonly element = node(() => uiGrid({
     rows: ["auto"],
     columns: ["auto", "auto", "auto"],
-    gap: "4px",
-    items: [
-      [this.leftPart()],
-      [this.selectPart()],
-      [this.outputPart()]
+    content: [
+      this.leftPart(),
+      this.selectPart(),
+      this.outputPart()
     ]
   }))
 }

@@ -10,6 +10,7 @@ import { uiTextBox } from './ui/alpha/ui_text_box'
 
 import { uiNumberTextBox } from './ui/beta/ui_parsed_tb'
 import { uiText } from './ui/alpha/ui_text'
+import { View } from './example/temperature'
 
 const selected = cell(true)
 
@@ -68,11 +69,11 @@ const allItems = [
 ]
 
 const piece = uiGrid({
-  items: allItems,
+  content: allItems,
   columns: ["auto"],
   rows: allItems.map(() => "auto"),
 })
 
-const _ = new UIApp("#app", piece)
+// const _ = new UIApp("#app", piece)
 
-// const _ = new UIApp("#app", new View())
+const _ = new UIApp("#app", new View())
