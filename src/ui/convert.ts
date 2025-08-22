@@ -1,26 +1,27 @@
-import { cell, type Get, type Mem, isGet, isMem } from "../core"
+import { cell, isGet, isMem, once, type Get, type Mem } from "../core"
 import { uiPara } from "./alpha/ui_para"
 import { uiText } from "./alpha/ui_text"
 import { isBlock, isInline, UIElement } from "./ui_element"
 
-export type ToGet<T> = T | Get<T> | Mem<T>
-export type ToMem<T> = T | Mem<T>
+export type ToGet<T> = Get<T> | T
 
-///////
-
-export function toGet<T>(value: ToGet<T>): Get<T> {
-  if (isGet(value) || isMem(value)) {
-    return value
+export function toGet<T>(arg: ToGet<T>): Get<T> {
+  if (isGet(arg)) {
+    return arg
   } else {
-    return () => value
+    return once(() => arg)
   }
 }
 
-export function toMem<T>(value: ToMem<T>): Mem<T> {
-  if (isMem(value)) {
-    return value
+///////
+
+export type ToMem<T> = Mem<T> | T
+
+export function toMem<T>(arg: ToMem<T>): Mem<T> {
+  if (isMem(arg)) {
+    return arg
   } else {
-    return cell(value)
+    return cell(arg)
   }
 }
 

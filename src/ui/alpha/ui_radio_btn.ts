@@ -1,7 +1,7 @@
-import { node, type Mem, tracker, attach, TwoWayPipe } from "../../core"
+import { type Mem, attach, TwoWayPipe, once, view, touch } from "../../core"
 import { toMem, type ToMem } from "../convert"
 import { newId } from "../id_gen"
-import { UIInlineElement } from "../ui_element"
+import { UIElement, UIInlineElement } from "../ui_element"
 import { type UILabelTargetMixin } from "./ui_label"
 
 class UIRadioButton
@@ -13,29 +13,27 @@ class UIRadioButton
 
   constructor(
     group: string,
-    checked: Mem<boolean>,
+    checked: ToMem<boolean>,
   ) {
     super()
     this.group = group
-    this.checked = checked
+    this.checked = toMem(checked)
   }
 
-  readonly id = node(() => {
-    return newId().toString()
-  })
+  readonly id = once(() => newId().toString())
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const input = document.createElement("input")
     input.id = this.id()
     input.className = "fluor-uiRadioButton"
     input.name = this.group
     input.type = "radio"
 
-    const checkedTarget = tracker(
-      input.checked,
+    const checkedTarget = touch(view(
+      () => input.checked,
       (value: boolean) => input.checked = value
-    )
-    input.onchange = () => checkedTarget(input.checked)
+    ))
+    input.onchange = () => checkedTarget.touch()
 
     attach(
       input,
@@ -54,9 +52,6 @@ class UIRadioButton
 export function uiRadioButton(
   group: string,
   checked: ToMem<boolean>,
-): UIInlineElement & UILabelTargetMixin {
-  return new UIRadioButton(
-    group,
-    toMem(checked),
-  )
+): UIElement<"inline"> {
+  return new UIRadioButton(group, checked)
 }

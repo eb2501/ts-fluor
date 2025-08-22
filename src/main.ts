@@ -1,16 +1,16 @@
-import { cell } from './core'
-import { uiGroup } from './ui'
+import { cell, view } from './core'
 import { UIApp } from './ui/ui_app'
-import { uiCheckBox } from './ui/alpha/ui_check_box'
-import { uiGrid } from './ui/alpha/ui_grid'
-import { uiH1 } from './ui/alpha/ui_heading'
-import { uiPara } from './ui/alpha/ui_para'
-import { uiRadioButton } from './ui/alpha/ui_radio_btn'
-import { uiTextBox } from './ui/alpha/ui_text_box'
 
 import { uiNumberTextBox } from './ui/beta/ui_parsed_tb'
-import { uiText } from './ui/alpha/ui_text'
 import { View } from './example/temperature'
+import { uiH1 } from './ui/alpha/ui_heading'
+import { uiPara } from './ui/alpha/ui_para'
+import { uiText } from './ui/alpha/ui_text'
+import { uiGroup } from './ui/alpha/ui_group'
+import { uiTextBox } from './ui/alpha/ui_text_box'
+import { uiRadioButton } from './ui/alpha/ui_radio_btn'
+import { uiCheckBox } from './ui/alpha/ui_check_box'
+import { uiGrid } from './ui/alpha/ui_grid'
 
 const selected = cell(true)
 
@@ -23,29 +23,18 @@ const item3 = uiGroup(
     uiTextBox(
       false,
       "Type something...",
-      "",
+      cell(""),
     ),
     uiRadioButton(
       "radio",
-      (value?: boolean) => {
-        if (value === undefined) {
-          return selected()
-        } else {
-          selected(value)
-          return value
-        }
-      }
+      selected,
     ),
     uiRadioButton(
       "radio",
-      (value?: boolean) => {
-        if (value === undefined) {
-          return !selected()
-        } else {
-          selected(!value)
-          return !value
-        }
-      }
+      view(
+        () => !selected(),
+        (value) => selected(!value)
+      )
     ),
     uiCheckBox(selected),
     uiNumberTextBox(
@@ -69,6 +58,6 @@ const piece = uiGrid(
   ["auto"],
 )
 
-const _ = new UIApp("#app", piece)
+// const _ = new UIApp("#app", piece)
 
-// const _ = new UIApp("#app", new View())
+const _ = new UIApp("#app", new View())

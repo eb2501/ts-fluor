@@ -1,4 +1,4 @@
-import { node, type Get } from "../../core"
+import { once, type Once } from "../../core"
 import { UIElement, type UIType } from "../ui_element"
 
 export abstract class UIComponent<T extends UIType> extends UIElement<T> {
@@ -9,13 +9,11 @@ export abstract class UIComponent<T extends UIType> extends UIElement<T> {
     this.name = name
   }
 
-  type(): T {
-    return this.element().type()
-  }
+  readonly type = once(() => this.element().type())
 
-  abstract readonly element: Get<UIElement<T>>
+  abstract readonly element: Once<UIElement<T>>
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const tag = this.type() === "block" ? "div" : "span"
     const html = document.createElement(tag)
     html.className = `fluor-${this.name}`

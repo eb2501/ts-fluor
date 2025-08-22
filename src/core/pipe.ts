@@ -1,9 +1,7 @@
 
-import { cell } from "./cell"
-import { node } from "./node"
-import { snapshot } from "./reactor"
 import type { Ticket } from "./ticket"
-import type { Get, Mem } from "./triad"
+import type { Get, Mem } from "./basic"
+import { cell, node } from "."
 
 export class OneWayPipe<T, S extends T = T> implements Ticket {
   private readonly source: Get<S>
@@ -24,7 +22,6 @@ export class OneWayPipe<T, S extends T = T> implements Ticket {
   constructor(source: Get<S>, target: Mem<T>) {
     this.source = source
     this.target = target
-    snapshot(() => this.sourceCache())
     this.sourceCache.addListener(this.sourceListener)
     this.sourceListener(false)
   }
@@ -80,10 +77,6 @@ export class TwoWayPipe<T> implements Ticket {
   constructor(source: Mem<T>, target: Mem<T>) {
     this.source = source
     this.target = target
-    snapshot(() => {
-      this.sourceCache()
-      this.targetCache()
-    })
     this.sourceCache.addListener(this.sourceListener)
     this.targetCache.addListener(this.targetListener)
     this.sourceListener(false)

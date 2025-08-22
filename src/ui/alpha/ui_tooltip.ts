@@ -1,4 +1,4 @@
-import { node, type Get, OneWayPipe, attach } from "../../core"
+import { type Get, OneWayPipe, attach, once, view } from "../../core"
 import { toGet, type ToGet } from "../convert"
 import { UIElement, UIMonoContentElement, type UIType } from "../ui_element"
 
@@ -7,29 +7,27 @@ class UITooltip<T extends UIType> extends UIMonoContentElement<T> {
 
   constructor(
     content: UIElement<T>,
-    tooltip: Get<string>,
+    tooltip: ToGet<string>,
   ) {
     super(content)
-    this.tooltip = tooltip
+    this.tooltip = toGet(tooltip)
   }
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const tag = this.type() === "block" ? "div" : "span"
     const html = document.createElement(tag)
-    html.className = 'fluor-uiTooltip'
+    html.className = "fluor-uiTooltip"
 
-    const tooltipTarget = (value? : string) => {
-      if (value === undefined) {
-        return html.getAttribute("title") || ""
-      } else {
+    const tooltipTarget = view(
+      () => html.getAttribute("title") || "",
+      (value) => {
         if (value) {
           html.setAttribute("title", value)
         } else {
           html.removeAttribute("title")
         }
-        return value
       }
-    }
+    )
 
     attach(
       html,
@@ -50,8 +48,5 @@ export function uiTooltip<T extends UIType>(
   content: UIElement<T>,
   tooltip: ToGet<string>
 ): UIElement<T> {
-  return new UITooltip(
-    content,
-    toGet(tooltip)
-  )
+  return new UITooltip(content, tooltip)
 }

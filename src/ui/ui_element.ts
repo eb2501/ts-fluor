@@ -1,10 +1,10 @@
-import { type Get } from "../core"
+import { type Once, once } from "../core"
 
 export type UIType = "block" | "inline"
 
 export abstract class UIElement<T extends UIType> {
-  abstract readonly html: Get<HTMLElement>
-  abstract type(): T
+  abstract readonly html: Once<HTMLElement>
+  abstract readonly type: Once<T>
 }
 
 ///////
@@ -24,15 +24,11 @@ export function isBlock(element: unknown): element is UIElement<"block"> {
 ///////
 
 export abstract class UIBlockElement extends UIElement<"block"> {
-  type(): "block" {
-    return "block"
-  }
+  readonly type = once(() => "block" as const)
 }
 
 export abstract class UIInlineElement extends UIElement<"inline"> {
-  type(): "inline" {
-    return "inline"
-  }
+  readonly type = once(() => "inline" as const)
 }
 
 ///////
@@ -45,22 +41,21 @@ export abstract class UIMonoContentElement<T extends UIType> extends UIElement<T
     this.content = content
   }
 
-  type(): T {
-    return this.content.type()
-  }
+  readonly type = once(() => this.content.type())
 }
 
 ///////
 
 export abstract class UIMultiContentElement<T extends UIType> extends UIElement<T> {
-  protected readonly contents: UIElement<T>[]
+  protected readonly content: UIElement<T>[]
 
-  constructor(contents: UIElement<T>[]) {
+  constructor(content: UIElement<T>[]) {
     super()
-    this.contents = contents
+    if (content.length === 0) {
+      throw new Error('Content should have at least one element')
+    }
+    this.content = content
   }
 
-  type(): T {
-    return this.contents[0].type()
-  }
+  readonly type = once(() => this.content[0].type())
 }

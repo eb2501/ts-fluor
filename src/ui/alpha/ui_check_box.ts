@@ -1,8 +1,8 @@
-import { node, type Mem, TwoWayPipe, tracker, attach } from "../../core"
-import { UIInlineElement } from "../ui_element"
-import { toMem, type ToMem } from "../convert"
+import { type Mem, TwoWayPipe, attach, touch, once, view } from "../../core"
+import { UIElement, UIInlineElement } from "../ui_element"
 import { type UILabelTargetMixin } from "./ui_label"
 import { newId } from "../id_gen"
+import { toMem, type ToMem } from "../convert"
 
 class UICheckBox
   extends UIInlineElement
@@ -11,27 +11,25 @@ class UICheckBox
   private readonly checked: Mem<boolean>
 
   constructor(
-    checked: Mem<boolean>
+    checked: ToMem<boolean>
   ) {
     super()
-    this.checked = checked
+    this.checked = toMem(checked)
   }
 
-  readonly id = node(() => {
-    return newId().toString()
-  })
+  readonly id = once(() => newId().toString())
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const input = document.createElement("input")
     input.id = this.id()
     input.className = "fluor-uiCheckBox"
     input.type = "checkbox"
 
-    const checkedTarget = tracker(
-      input.checked,
-      (value: boolean) => input.checked = value,
-    )
-    input.onchange = () => checkedTarget(input.checked)
+    const checkedTarget = touch(view(
+      () => input.checked,
+      (value) => input.checked = value
+    ))
+    input.onchange = () => checkedTarget.touch()
 
     attach(
       input,
@@ -47,8 +45,8 @@ class UICheckBox
 
 ///////
 
-export function uiCheckBox(checked: ToMem<boolean>): UIInlineElement & UILabelTargetMixin {
-  return new UICheckBox(
-    toMem(checked)
-  )
+export function uiCheckBox(
+  checked: ToMem<boolean>
+): UIElement<"inline"> & UILabelTargetMixin {
+  return new UICheckBox(checked)
 }

@@ -1,11 +1,11 @@
-import type { UIElement } from "./ui_element"
+import type { UIElement, UIType } from "./ui_element"
 import type { Ticket } from "../core/ticket"
 
 
-export class UIApp implements Ticket {
+export class UIApp<T extends UIType> implements Ticket {
   private readonly anchor: HTMLElement
   
-  constructor(id: string, root: UIElement<"block">) {
+  constructor(id: string, root: UIElement<T>) {
     const anchor = document.getElementById(id)
     if (!anchor) {
       throw new Error(`Element with id [${id}] not found`)

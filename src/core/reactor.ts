@@ -7,46 +7,87 @@ import { getCurrentMode, withMode } from "./mode"
 
 type Caller = WeakRef<NodeReactor<any>>
 
-///
+///////
 
 interface Callee {
     _addCaller(caller: Caller): void
     _removeCaller(caller: Caller): void
 }
 
-///
+///////
 
 let currentContext: Set<Callee> | null = null
 
-///
+///////
 
 export function snapshot<T>(fn: () => T): T {
   const previousContext = currentContext
   currentContext = null
   try {
-    return fn()
+    if (getCurrentMode() === "once") {
+      return withMode("snapshot", fn)
+    } else {
+      return fn()
+    }
   } finally {
     currentContext = previousContext
   }
 }
 
-///
+///////
 
-export class CellReactor<T> implements Callee {
+abstract class Reactor implements Cache {
+  private listeners: Set<Listener> | null = null
+
+  protected notify(cached: boolean): void {
+    withMode("locked", () => {
+      this.listeners?.forEach((listener) => {
+        try {
+          listener(cached)
+        } catch (error) {
+          console.error("Error in listener:", error)
+        }
+      })
+    })
+  }
+
+  abstract readonly cached: boolean
+
+  addListener(listener: Listener): void {
+    if (this.listeners === null) {
+      this.listeners = new Set()
+    }
+    if (this.listeners.has(listener)) {
+      throw new Error("Listener already added")
+    }
+    this.listeners.add(listener)
+  }
+
+  removeListener(listener: Listener): void {
+    if ((this.listeners === null) || (!this.listeners.has(listener))) {
+      throw new Error("Listener not found")
+    }
+    this.listeners.delete(listener)
+    if (this.listeners.size === 0) {
+      this.listeners = null
+    }
+  }
+}
+
+///////
+
+export class CellReactor<T> extends Reactor implements Callee {
   private callers = new Set<Caller>()
   private value: T
 
   constructor(value: T) {
+    super()
     this.value = value
     this.callers = new Set()
   }
 
-  //
-  // Write<T>
-  //
-
-  get(): T {
-    return withMode("read", () => {
+  getValue(): T {
+    return withMode("calc", () => {
       if (currentContext) {
         currentContext.add(this)
       }
@@ -65,16 +106,16 @@ export class CellReactor<T> implements Callee {
     })
   }
 
-  set(value: T): void {
+  setValue(value: T): void {
     withMode("free", () => {
       this._invalidate()
       this.value = value
     })
   }
 
-  //
-  // Callee
-  //
+  get cached() {
+    return true
+  }
 
   _addCaller(caller: Caller): void {
     invariant(!this.callers.has(caller))
@@ -104,17 +145,17 @@ class ReactorTicket implements Ticket {
   }
 }
 
-///
+///////
 
-export class NodeReactor<T> implements Cache, Callee {
+export class NodeReactor<T> extends Reactor implements Callee {
   private readonly self: Caller = new WeakRef(this)
   private readonly callees: Callee[] = []
   private readonly getFn: () => T
   private callers: Set<Caller> | null
   private value: T | null
-  private listeners: Set<Listener> | null = null
 
   constructor(getFn: () => T) {
+    super()
     this.getFn = getFn
     this.value = null
     this.callers = null
@@ -124,25 +165,8 @@ export class NodeReactor<T> implements Cache, Callee {
     )
   }
 
-  private notify(): void {
-    invariant(getCurrentMode() !== "locked")
-    withMode("locked", () => {
-      this.listeners?.forEach((listener) => {
-        try {
-          listener(this.callers !== null)
-        } catch (error) {
-          console.error("Error in listener:", error)
-        }
-      })
-    })
-  }
-
-  //
-  // Read<T>
-  //
-
-  get(): T {
-    return withMode("read", () => {
+  getValue(): T {
+    return withMode("calc", () => {
       if (this.callers === null) {
         const previousContext = currentContext
         currentContext = new Set<Callee>()
@@ -156,7 +180,7 @@ export class NodeReactor<T> implements Cache, Callee {
           currentContext = previousContext
         }
         this.callers = new Set()
-        this.notify()
+        this.notify(true)
       }
       if (currentContext) {
         currentContext.add(this)
@@ -178,40 +202,12 @@ export class NodeReactor<T> implements Cache, Callee {
     this.callees.forEach((callee) => callee._removeCaller(this.self))
     this.callees.length = 0
     this.value = null
-    this.notify()
+    this.notify(false)
   }
 
-  //
-  // State
-  //
-
-  get isCached(): boolean {
+  get cached(): boolean {
     return this.callers !== null
   }
-
-  addListener(listener: Listener): void {
-    if (this.listeners === null) {
-      this.listeners = new Set()
-    }
-    if (this.listeners.has(listener)) {
-      throw new Error("Listener already added")
-    }
-    this.listeners.add(listener)
-  }
-
-  removeListener(listener: Listener): void {
-    if ((this.listeners === null) || (!this.listeners.has(listener))) {
-      throw new Error("Listener not found")
-    }
-    this.listeners.delete(listener)
-    if (this.listeners.size === 0) {
-      this.listeners = null
-    }
-  }
-
-  //
-  // Callee
-  //
 
   _addCaller(caller: Caller): void {
     invariant((this.callers !== null) && (!this.callers.has(caller)))
@@ -222,5 +218,38 @@ export class NodeReactor<T> implements Cache, Callee {
     if (this.callers !== null) {
       this.callers.delete(caller)
     }
+  }
+}
+
+///////
+
+export class OnceReactor<T> extends Reactor {
+  private getFn: (() => T) | null
+  private value: T | null
+
+  constructor(getFn: () => T) {
+    super()
+    this.getFn = getFn
+    this.value = null
+  }
+
+  getValue(): T {
+    if (this.getFn === null) {
+      invariant(this.value !== null)
+      return this.value
+    } else {
+      invariant(this.value === null)
+      return withMode("once", () => {
+        invariant(this.getFn !== null)
+        this.value = this.getFn()
+        this.getFn = null
+        this.notify(true)
+        return this.value
+      })
+    }
+  }
+
+  get cached(): boolean {
+    return this.getFn === null
   }
 }

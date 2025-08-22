@@ -1,9 +1,9 @@
-import { attach, node, OneWayPipe, type Get } from "../../core"
+import { attach, once, OneWayPipe, view, type Get, type Once } from "../../core"
 import { toGet, type ToGet } from "../convert"
-import { UIInlineElement } from "../ui_element"
+import { UIElement, UIInlineElement } from "../ui_element"
 
 export interface UILabelTargetMixin {
-  readonly id: Get<string>
+  readonly id: Once<string>
 }
 
 ///////
@@ -12,24 +12,21 @@ class UILabel extends UIInlineElement {
   private readonly target: UILabelTargetMixin
   private readonly text: Get<string>
 
-  constructor(target: UILabelTargetMixin, text: Get<string>) {
+  constructor(target: UILabelTargetMixin, text: ToGet<string>) {
     super()
     this.target = target
-    this.text = text
+    this.text = toGet(text)
   }
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const label = document.createElement("label")
+    label.className = "fluor-uiLabel"
     label.htmlFor = this.target.id()
 
-    const textTarget = (value?: string) => {
-      if (value === undefined) {
-        return label.textContent
-      } else {
-        label.textContent = value
-        return value
-      }
-    }
+    const textTarget = view(
+      () => label.textContent,
+      (value) => label.textContent = value
+    )
 
     attach(
       label,
@@ -48,9 +45,6 @@ class UILabel extends UIInlineElement {
 export function uiLabel(
   target: UILabelTargetMixin,
   text: ToGet<string>
-): UIInlineElement {
-  return new UILabel(
-    target,
-    toGet(text)
-  )
+): UIElement<"inline"> {
+  return new UILabel(target, text)
 }

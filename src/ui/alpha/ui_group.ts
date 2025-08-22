@@ -1,5 +1,5 @@
-import { UIBlockElement, UIMonoContentElement, type UIElement } from "../ui_element"
-import { attach, node, OneWayPipe, type Get } from "../../core"
+import { UIMonoContentElement, type UIElement } from "../ui_element"
+import { attach, OneWayPipe, type Get, once, view } from "../../core"
 import { toGet, type ToGet } from "../convert"
 
 class UIGroup extends UIMonoContentElement<"block"> {
@@ -7,27 +7,23 @@ class UIGroup extends UIMonoContentElement<"block"> {
 
   constructor(
     content: UIElement<"block">,
-    legend: Get<string>,
+    legend: ToGet<string>,
   ) {
     super(content)
-    this.legend = legend
+    this.legend = toGet(legend)
   }
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const fieldset = document.createElement("fieldset")
-    fieldset.className = "fluor-group"
+    fieldset.className = "fluor-uiGroup"
 
     const legend = document.createElement("legend")
     fieldset.appendChild(legend)
 
-    const legendTarget = (value?: string) => {
-      if (value === undefined) {
-        return legend.textContent || ""
-      } else {
-        legend.textContent = value
-        return value
-      }
-    }
+    const legendTarget = view(
+      () => legend.textContent || "",
+      (value) => legend.textContent = value
+    )
 
     attach(
       legend,
@@ -46,10 +42,7 @@ class UIGroup extends UIMonoContentElement<"block"> {
 
 export function uiGroup(
   content: UIElement<"block">,
-  legend: ToGet<string>
-): UIBlockElement {
-  return new UIGroup(
-    content,
-    toGet(legend)
-  )
+  legend: ToGet<string>,
+): UIElement<"block"> {
+  return new UIGroup(content, legend)
 }

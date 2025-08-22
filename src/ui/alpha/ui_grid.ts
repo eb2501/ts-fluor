@@ -1,4 +1,4 @@
-import { node } from "../../core"
+import { once } from "../../core"
 import { type Size } from "../common"
 import { UIElement, UIMultiContentElement } from "../ui_element"
 
@@ -18,13 +18,13 @@ class UIGrid extends UIMultiContentElement<"block"> {
     this.columns = columns
   }
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const div = document.createElement("div")
-    div.className = "fluor-grid"
+    div.className = `fluor-uiGrid`
     div.style.display = "grid"
     div.style.gridTemplateRows = this.rows.join(" ")
     div.style.gridTemplateColumns = this.columns.join(" ")
-    div.replaceChildren(...this.contents.map(c => c.html()))
+    div.replaceChildren(...this.content.map(c => c.html()))
     return div
   })
 }
@@ -36,9 +36,5 @@ export function uiGrid(
   rows: GridSize[],
   columns: GridSize[],
 ): UIElement<"block"> {
-  return new UIGrid(
-    content,
-    rows,
-    columns,
-  )
+  return new UIGrid(content, rows, columns)
 }

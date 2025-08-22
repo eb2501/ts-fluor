@@ -1,12 +1,12 @@
-import { uiClasses } from "../alpha/ui_classes"
-import { uiTextBox } from "../alpha/ui_text_box"
-import { cell, node, type Get, type Mem } from "../../core"
-import { UIElement } from "../ui_element"
+import { cell, node, once, view, type Get, type Mem } from "../../core"
 import { UIComponent } from "../alpha/ui_component"
-import { toGet, toMem, type ToGet, type ToMem } from "../convert"
-import { uiTooltip } from "../alpha/ui_tooltip"
 import validator from "validator"
 import type { UILabelTargetMixin } from "../alpha/ui_label"
+import { toGet, toMem, type ToGet, type ToMem } from "../convert"
+import type { UIElement } from "../ui_element"
+import { uiTextBox } from "../alpha/ui_text_box"
+import { uiTooltip } from "../alpha/ui_tooltip"
+import { uiClasses } from "../alpha/ui_classes"
 
 export class ParseError {
   public readonly message: string
@@ -48,30 +48,31 @@ class UIParsedTextBox<T>
 
   constructor(
     live: boolean,
-    placeholder: Get<string>,
+    placeholder: ToGet<string>,
     toText: (value: T) => string,
     fromText: (text: string) => T | ParseError,
-    value: Mem<T>
+    value: ToMem<T>
   ) {
     super("uiParsedTextBox")
     this.live = live
-    this.placeholder = placeholder
+    this.placeholder = toGet(placeholder)
     this.toText = toText
     this.fromText = fromText
-    this.value = value
+    this.value = toMem(value)
   }
 
   private readonly unparsed = cell<Unparsed | null>(null)
   private readonly parsed = node(() => this.toText(this.value()))
-  private readonly text = (value? : string) => {
-    if (value === undefined) {
+  private readonly text = view(
+    () => {
       const unparsed = this.unparsed()
       if (unparsed !== null) {
         return unparsed.text
       } else {
         return this.parsed()
       }
-    } else {
+    },
+    (value) => {
       const parsed = this.fromText(value)
       if (parsed instanceof ParseError) {
         this.unparsed(new Unparsed(value, parsed.message))
@@ -81,21 +82,21 @@ class UIParsedTextBox<T>
       }
       return value
     }
-  }
+  )
 
-  private readonly classes = () => [
+  private readonly classes = view(() => [
     this.unparsed() === null ? "fluor-valid" : "fluor-invalid",
-  ]
+  ])
 
-  private readonly tooltip = () => this.unparsed()?.error ?? ""
+  private readonly tooltip = view(() => this.unparsed()?.error ?? "")
 
-  private readonly textBox = node(() => uiTextBox(
+  private readonly textBox = once(() => uiTextBox(
     this.live,
     this.placeholder,
     this.text,
   ))
 
-  readonly element = node(() => uiTooltip(
+  readonly element = once(() => uiTooltip(
     uiClasses(
       this.textBox(),
       this.classes,
@@ -103,9 +104,9 @@ class UIParsedTextBox<T>
     this.tooltip,
   ))
 
-  readonly valid = () => this.unparsed() === null
+  readonly valid = view(() => this.unparsed() === null)
 
-  readonly id = () => this.textBox().id()
+  readonly id = once(() => this.textBox().id())
 }
 
 ///////
@@ -117,13 +118,7 @@ export function uiParsedTextBox<T>(
   fromText: (text: string) => T | ParseError,
   value: ToMem<T>
 ): UIElement<"inline"> & UILabelTargetMixin & UIValidMixin {
-  return new UIParsedTextBox(
-    live,
-    toGet(placeholder),
-    toText,
-    fromText,
-    toMem(value),
-  )
+  return new UIParsedTextBox(live, placeholder, toText, fromText, value)
 }
 
 ///////

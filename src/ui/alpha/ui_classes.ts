@@ -1,29 +1,27 @@
 import { UIElement, UIMonoContentElement, type UIType } from "../ui_element"
-import { node, type Get, attach, OneWayPipe } from "../../core"
+import { type Get, attach, OneWayPipe, once, view } from "../../core"
 import { toGet, type ToGet } from "../convert"
 
 class UIClasses<T extends UIType> extends UIMonoContentElement<T> {
   private readonly classes: Get<string[]>
 
-  constructor(content: UIElement<T>, classes: Get<string[]>) {
+  constructor(content: UIElement<T>, classes: ToGet<string[]>) {
     super(content)
-    this.classes = classes
+    this.classes = toGet(classes)
   }
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const tag = this.type() === "block" ? "div" : "span"
     const html = document.createElement(tag)
 
-    const classesSource = () => ["fluor-uiClasses", ...this.classes()]
+    const classesSource = view(() => [
+      "fluor-uiClasses", ...this.classes()
+    ])
 
-    const classesTarget = (value?: string[]) => {
-      if (value === undefined) {
-        return Array.from(html.classList)
-      } else {
-        html.className = value.join(" ")
-        return value
-      }
-    }
+    const classesTarget = view(
+      () => Array.from(html.classList),
+      (value) => html.className = value.join(" ")
+    )
 
     attach(
       html,
@@ -44,8 +42,5 @@ export function uiClasses<T extends UIType>(
   content: UIElement<T>,
   classes: ToGet<string[]>
 ): UIElement<T> {
-  return new UIClasses(
-    content,
-    toGet(classes)
-  )
+  return new UIClasses(content, classes)
 }

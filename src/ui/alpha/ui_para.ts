@@ -1,35 +1,31 @@
-import { attach, node, OneWayPipe, type Get } from "../../core"
+import { attach, once, OneWayPipe, view, type Get } from "../../core"
 import { toGet, type ToGet } from "../convert"
 import { UIBlockElement, UIElement } from "../ui_element"
 
 class UIPara extends UIBlockElement {
   private readonly content: Get<UIElement<"inline">[]>
 
-  constructor(content: Get<UIElement<"inline">[]>) {
+  constructor(content: ToGet<UIElement<"inline">[]>) {
     super()
-    this.content = content
+    this.content = toGet(content)
   }
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const p = document.createElement("p")
     p.className = "fluor-uiPara"
 
-    const childrenSource = () => {
-      const array: Node[] = []
+    const childrenSource = view(() => {
+      const array: Element[] = []
       for (const item of this.content()) {
         array.push(item.html())
       }
       return array
-    }
+    })
 
-    const childrenTarget = (value?: Node[]) => {
-      if (value === undefined) {
-        return Array.from(p.children)
-      } else {
-        p.replaceChildren(...value)
-        return value
-      }
-    }
+    const childrenTarget = view(
+      () => Array.from(p.children),
+      (value) => p.replaceChildren(...value)
+    )
 
     attach(
       p,
@@ -45,8 +41,6 @@ class UIPara extends UIBlockElement {
 
 ///////
 
-export function uiPara(
-  content: ToGet<UIElement<"inline">[]>
-): UIBlockElement {
-  return new UIPara(toGet(content))
+export function uiPara(content: ToGet<UIElement<"inline">[]>): UIElement<"block"> {
+  return new UIPara(content)
 }

@@ -1,27 +1,23 @@
-import { attach, node, OneWayPipe, type Get } from "../../core"
+import { attach, once, OneWayPipe, view, type Get } from "../../core"
 import { toGet, type ToGet } from "../convert"
-import { UIInlineElement } from "../ui_element"
+import { UIElement, UIInlineElement } from "../ui_element"
 
 class UIText extends UIInlineElement {
   private readonly text: Get<string>
 
-  constructor(text: Get<string>) {
+  constructor(text: ToGet<string>) {
     super()
-    this.text = text
+    this.text = toGet(text)
   }
 
-  readonly html = node(() => {
+  readonly html = once(() => {
     const span = document.createElement("span")
     span.className = "fluor-uiText"
 
-    const textTarget = (value?: string) => {
-      if (value === undefined) {
-        return span.textContent
-      } else {
-        span.textContent = value
-        return value
-      }
-    }
+    const textTarget = view(
+      () => span.textContent,
+      (value) => span.textContent = value
+    )
 
     attach(
       span,
@@ -37,6 +33,6 @@ class UIText extends UIInlineElement {
 
 ///////
 
-export function uiText(text: ToGet<string>): UIText {
-  return new UIText(toGet(text))
+export function uiText(text: ToGet<string>): UIElement<"inline"> {
+  return new UIText(text)
 }
