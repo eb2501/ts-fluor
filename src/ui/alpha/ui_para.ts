@@ -2,10 +2,12 @@ import { attach, once, OneWayPipe, view, type Get } from "../../core"
 import { toGet, type ToGet } from "../convert"
 import { UIBlockElement, UIElement } from "../ui_element"
 
-class UIPara extends UIBlockElement {
-  private readonly content: Get<UIElement<"inline">[]>
+export type UIParaItem = UIElement<"inline"> | string
 
-  constructor(content: ToGet<UIElement<"inline">[]>) {
+class UIPara extends UIBlockElement {
+  private readonly content: Get<UIParaItem[]>
+
+  constructor(content: ToGet<UIParaItem[]>) {
     super()
     this.content = toGet(content)
   }
@@ -15,15 +17,19 @@ class UIPara extends UIBlockElement {
     p.className = "fluor-uiPara"
 
     const childrenSource = view(() => {
-      const array: Element[] = []
+      const array: (Node | string)[] = []
       for (const item of this.content()) {
-        array.push(item.html())
+        if (item instanceof UIElement) {
+          array.push(item.html())
+        } else {
+          array.push(item)
+        }
       }
       return array
     })
 
     const childrenTarget = view(
-      () => Array.from(p.children),
+      () => Array.from(p.children).map((x) => x as Node | string),
       (value) => p.replaceChildren(...value)
     )
 
@@ -41,6 +47,6 @@ class UIPara extends UIBlockElement {
 
 ///////
 
-export function uiPara(content: ToGet<UIElement<"inline">[]>): UIElement<"block"> {
+export function uiPara(content: ToGet<UIParaItem[]>): UIElement<"block"> {
   return new UIPara(content)
 }

@@ -5,7 +5,6 @@ import { uiNumberTextBox } from './ui/beta/ui_parsed_tb'
 import { View } from './example/temperature'
 import { uiH1 } from './ui/alpha/ui_heading'
 import { uiPara } from './ui/alpha/ui_para'
-import { uiText } from './ui/alpha/ui_text'
 import { uiGroup } from './ui/alpha/ui_group'
 import { uiTextBox } from './ui/alpha/ui_text_box'
 import { uiRadioButton } from './ui/alpha/ui_radio_btn'
@@ -17,7 +16,7 @@ const selected = cell(true)
 const value = cell(10)
 
 const item1 = uiH1('Title!')
-const item2 = uiPara([uiText("Hello from MyUIApp!")])
+const item2 = uiPara(["Hello from MyUIApp!"])
 const item3 = uiGroup(
   uiPara([
     uiTextBox(

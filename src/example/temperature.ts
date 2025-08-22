@@ -8,7 +8,6 @@ import { uiCheckBox } from "../ui/alpha/ui_check_box"
 import { UIComponent } from "../ui/alpha/ui_component"
 import { uiGrid } from "../ui/alpha/ui_grid"
 import { uiPara } from "../ui/alpha/ui_para"
-import { uiText } from "../ui/alpha/ui_text"
 import { uiNumberTextBox } from "../ui/beta/ui_parsed_tb"
 
 export type TemperatureUnit = 'celsius' | 'fahrenheit'
@@ -70,9 +69,9 @@ export class View extends UIComponent<"block"> {
   private readonly selectPart = once(() => uiGrid(
     [
       uiPara([this.celsiusPart()]),
-      uiPara([uiText("Celsius")]),
+      uiPara(["Celsius"]),
       uiPara([this.fahrenheitPart()]),
-      uiPara([uiText("Fahrenheit")])
+      uiPara(["Fahrenheit"])
     ],
     ["auto", "auto"],
     ["auto", "auto"],
@@ -80,7 +79,7 @@ export class View extends UIComponent<"block"> {
 
   private readonly outputText = node(() => {
     if (this.inputPart().valid()) {
-      const valueText = this.model().targetValue().toString()
+      const valueText = Math.round(this.model().targetValue()).toString()
       return `= ${valueText} ${this.model().targetUnit()}`
     } else {
       return "= ?"
@@ -88,7 +87,7 @@ export class View extends UIComponent<"block"> {
   })
 
   private readonly outputPart = once(() => uiPara(
-    [uiText(this.outputText)]
+    view(() => [this.outputText()]),
   ))
 
   readonly element = once(() => uiGrid(
