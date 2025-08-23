@@ -30,32 +30,3 @@ export abstract class UIBlockElement extends UIElement<"block"> {
 export abstract class UIInlineElement extends UIElement<"inline"> {
   readonly type = once(() => "inline" as const)
 }
-
-///////
-
-export abstract class UIMonoContentElement<T extends UIType> extends UIElement<T> {
-  protected readonly content: UIElement<T>
-
-  constructor(content: UIElement<T>) {
-    super()
-    this.content = content
-  }
-
-  readonly type = once(() => this.content.type())
-}
-
-///////
-
-export abstract class UIMultiContentElement<T extends UIType> extends UIElement<T> {
-  protected readonly content: UIElement<T>[]
-
-  constructor(content: UIElement<T>[]) {
-    super()
-    if (content.length === 0) {
-      throw new Error('Content should have at least one element')
-    }
-    this.content = content
-  }
-
-  readonly type = once(() => this.content[0].type())
-}

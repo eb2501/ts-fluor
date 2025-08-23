@@ -1,18 +1,22 @@
 import { type Get, OneWayPipe, attach, once, view } from "../../core"
 import { toGet, type ToGet } from "../convert"
-import { UIElement, UIMonoContentElement, type UIType } from "../ui_element"
+import { UIElement, type UIType } from "../ui_element"
 
-class UITooltip<T extends UIType> extends UIMonoContentElement<T> {
+class UITooltip<T extends UIType> extends UIElement<T> {
+  private readonly content: UIElement<T>
   private readonly tooltip: Get<string>
 
   constructor(
     content: UIElement<T>,
     tooltip: ToGet<string>,
   ) {
-    super(content)
+    super()
+    this.content = content
     this.tooltip = toGet(tooltip)
   }
 
+  readonly type = once(() => this.content.type())
+  
   readonly html = once(() => {
     const tag = this.type() === "block" ? "div" : "span"
     const html = document.createElement(tag)

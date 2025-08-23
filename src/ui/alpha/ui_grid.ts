@@ -1,10 +1,11 @@
 import { once } from "../../core"
 import { type Size } from "../common"
-import { UIElement, UIMultiContentElement } from "../ui_element"
+import { UIBlockElement, UIElement } from "../ui_element"
 
 export type GridSize = Size | `${number}fr` | "auto"
 
-class UIGrid extends UIMultiContentElement<"block"> {
+class UIGrid extends UIBlockElement {
+  private readonly content: UIElement<"block">[]
   private readonly rows: GridSize[]
   private readonly columns: GridSize[]
 
@@ -13,7 +14,8 @@ class UIGrid extends UIMultiContentElement<"block"> {
     rows: GridSize[],
     columns: GridSize[],
   ) {
-    super(content)
+    super()
+    this.content = content
     this.rows = rows
     this.columns = columns
   }
