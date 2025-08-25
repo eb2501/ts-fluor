@@ -1,6 +1,6 @@
 import { once } from "../../core"
 import type { Size } from "../common"
-import { UIBlockElement, UIElement } from "../ui_element"
+import { UIBlockElement, UIElement, type UIType } from "../ui_element"
 
 
 export type UIFlexDir = "row"
@@ -37,14 +37,14 @@ export type UIFlexOrganize = "center"
 ///////
 
 export class UIFlexItem {
-  readonly element: UIElement<"block">
+  readonly element: UIElement<UIType>
   readonly grow?: number
   readonly shrink?: number
   readonly basis?: Size
   readonly align?: UIFlexAlign
 
   constructor(
-    element: UIElement<"block">,
+    element: UIElement<UIType>,
     grow?: number,
     shrink?: number,
     basis?: Size,
@@ -67,7 +67,7 @@ export function uiFlexItem({
   basis,
   align,
 }: {
-  element: UIElement<"block">,
+  element: UIElement<UIType>,
   grow?: number,
   shrink?: number,
   basis?: Size,
@@ -79,7 +79,7 @@ export function uiFlexItem({
 ///////
 
 class UIFlex extends UIBlockElement {
-  private readonly content: (UIElement<"block"> | UIFlexItem)[]
+  private readonly content: (UIElement<UIType> | UIFlexItem)[]
   private readonly dir?: UIFlexDir
   private readonly wrap?: UIFlexWrap
   private readonly justify?: UIFlexJustify
@@ -87,7 +87,7 @@ class UIFlex extends UIBlockElement {
   private readonly organize?: UIFlexOrganize
 
   constructor(
-    content: (UIElement<"block"> | UIFlexItem)[],
+    content: (UIElement<UIType> | UIFlexItem)[],
     dir?: UIFlexDir,
     wrap?: UIFlexWrap,
     justify?: UIFlexJustify,
@@ -224,7 +224,7 @@ export function uiFlex({
   align,
   organize
 }: {
-  content: (UIElement<"block"> | UIFlexItem)[]
+  content: (UIElement<UIType> | UIFlexItem)[]
   dir?: UIFlexDir
   wrap?: UIFlexWrap
   justify?: UIFlexJustify

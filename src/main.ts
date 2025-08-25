@@ -9,7 +9,6 @@ import { uiGroup } from './ui/alpha/ui_group'
 import { uiTextBox } from './ui/alpha/ui_text_box'
 import { uiRadioButton } from './ui/alpha/ui_radio_btn'
 import { uiCheckBox } from './ui/alpha/ui_check_box'
-import { uiGrid } from './ui/alpha/ui_grid'
 import { uiFlex } from './ui/alpha/ui_flex'
 
 const selected = cell(true)
@@ -20,14 +19,12 @@ const item1 = uiH1('Title!')
 const item2 = uiPara(["Hello from MyUIApp!"])
 const item3 = uiGroup(
   uiFlex({
-    content:     [
-      uiPara([
-        uiTextBox(
-          false,
-          "Type something...",
-          cell(""),
-        )
-      ]),
+    content: [
+      uiTextBox(
+        false,
+        "Type something...",
+        cell(""),
+      ),
       uiPara([
         uiRadioButton(
           "radio",
@@ -41,20 +38,15 @@ const item3 = uiGroup(
           )
         ),
       ]),
-      uiPara([
-        uiCheckBox(selected)
-      ]),
-      uiPara([
-        uiNumberTextBox(
-          true,
-          "Enter a number",
-          value
-        )
-      ])
+      uiCheckBox(selected),
+      uiNumberTextBox(
+        true,
+        "Enter a number",
+        value
+      )
     ],
     dir: "column",
-    justify: "center",
-    align: "stretch",
+    align: "center",
   }),
   "Group!",
 )
