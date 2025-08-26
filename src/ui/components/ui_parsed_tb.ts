@@ -1,12 +1,12 @@
 import { cell, node, once, view, type Get, type Mem } from "../../core"
-import { UIComponent } from "../alpha/ui_component"
+import { UIComponent } from "../elements/ui_component"
 import validator from "validator"
-import type { UILabelTargetMixin } from "../alpha/ui_label"
+import type { UILabelTargetMixin } from "../elements/ui_label"
 import { toGet, toMem, type ToGet, type ToMem } from "../convert"
 import type { UIElement } from "../ui_element"
-import { uiTextBox } from "../alpha/ui_text_box"
-import { uiTooltip } from "../alpha/ui_tooltip"
-import { uiClasses } from "../alpha/ui_classes"
+import { uiTextBox } from "../elements/ui_text_box"
+import { uiTooltip } from "../elements/ui_tooltip"
+import { uiClasses } from "../elements/ui_classes"
 
 export class ParseError {
   public readonly message: string

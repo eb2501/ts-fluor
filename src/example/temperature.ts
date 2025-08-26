@@ -4,12 +4,12 @@
 //
 
 import { node, cell, once, view } from "../core"
-import { uiCheckBox } from "../ui/alpha/ui_check_box"
-import { UIComponent } from "../ui/alpha/ui_component"
-import { uiGrid } from "../ui/alpha/ui_grid"
-import { uiPara } from "../ui/alpha/ui_para"
-import { uiText } from "../ui/alpha/ui_text"
-import { uiNumberTextBox } from "../ui/beta/ui_parsed_tb"
+import { uiCheckBox } from "../ui/elements/ui_check_box"
+import { UIComponent } from "../ui/elements/ui_component"
+import { uiGrid } from "../ui/elements/ui_grid"
+import { uiPara } from "../ui/elements/ui_para"
+import { uiText } from "../ui/elements/ui_text"
+import { uiNumberTextBox } from "../ui/components/ui_parsed_tb"
 
 export type TemperatureUnit = 'celsius' | 'fahrenheit'
   
