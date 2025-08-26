@@ -17,39 +17,38 @@ const value = cell(10)
 
 const item1 = uiH1('Title!')
 const item2 = uiPara(["Hello from MyUIApp!"])
-const item3 = uiGroup(
-  uiFlex({
+const item3 = uiGroup({
+  content: uiFlex({
     content: [
-      uiTextBox(
-        false,
-        "Type something...",
-        cell(""),
-      ),
+      uiTextBox({
+        text: cell(""),
+        placeholder: "Type something...",
+      }),
       uiPara([
-        uiRadioButton(
-          "radio",
-          selected,
-        ),
-        uiRadioButton(
-          "radio",
-          view(
+        uiRadioButton({
+          group: "radio",
+          checked: selected,
+        }),
+        uiRadioButton({
+          group: "radio",
+          checked: view(
             () => !selected(),
             (value) => selected(!value)
           )
-        ),
+        }),
       ]),
       uiCheckBox(selected),
-      uiNumberTextBox(
-        true,
-        "Enter a number",
-        value
-      )
+      uiNumberTextBox({
+        value,
+        live: true,
+        placeholder: "Enter a number",
+      })
     ],
     dir: "column",
     align: "center",
   }),
-  "Group!",
-)
+  legend: "Group!",
+})
 
 const allItems = [
   item1,

@@ -4,25 +4,25 @@ import { UIElement, type UIType } from "../ui_element"
 
 class UITooltip<T extends UIType> extends UIElement<T> {
   private readonly content: UIElement<T>
-  private readonly tooltip: Get<string>
+  private readonly text: Get<string>
 
   constructor(
     content: UIElement<T>,
-    tooltip: ToGet<string>,
+    text: ToGet<string>,
   ) {
     super()
     this.content = content
-    this.tooltip = toGet(tooltip)
+    this.text = toGet(text)
   }
 
   readonly type = once(() => this.content.type())
-  
+
   readonly html = once(() => {
     const tag = this.type() === "block" ? "div" : "span"
     const html = document.createElement(tag)
     html.className = "fluor-uiTooltip"
 
-    const tooltipTarget = view(
+    const textTarget = view(
       () => html.getAttribute("title") || "",
       (value) => {
         if (value) {
@@ -36,8 +36,8 @@ class UITooltip<T extends UIType> extends UIElement<T> {
     attach(
       html,
       new OneWayPipe(
-        this.tooltip,
-        tooltipTarget
+        this.text,
+        textTarget
       )
     )
 
@@ -48,9 +48,12 @@ class UITooltip<T extends UIType> extends UIElement<T> {
 
 ///////
 
-export function uiTooltip<T extends UIType>(
+export function uiTooltip<T extends UIType>({
+  content,
+  text
+}: {
   content: UIElement<T>,
-  tooltip: ToGet<string>
-): UIElement<T> {
-  return new UITooltip(content, tooltip)
+  text: ToGet<string>
+}): UIElement<T> {
+  return new UITooltip(content, text)
 }

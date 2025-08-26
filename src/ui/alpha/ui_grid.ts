@@ -1,16 +1,16 @@
 import { once } from "../../core"
 import { type Size } from "../common"
-import { UIBlockElement, UIElement } from "../ui_element"
+import { UIBlockElement, UIElement, type UIType } from "../ui_element"
 
 export type GridSize = Size | `${number}fr` | "auto"
 
 class UIGrid extends UIBlockElement {
-  private readonly content: UIElement<"block">[]
+  private readonly content: UIElement<UIType>[]
   private readonly rows: GridSize[]
   private readonly columns: GridSize[]
 
   constructor(
-    content: UIElement<"block">[],
+    content: UIElement<UIType>[],
     rows: GridSize[],
     columns: GridSize[],
   ) {
@@ -33,10 +33,14 @@ class UIGrid extends UIBlockElement {
 
 ///////
 
-export function uiGrid(
-  content: UIElement<"block">[],
+export function uiGrid({
+  content,
+  rows,
+  columns
+}: {
+  content: UIElement<UIType>[],
   rows: GridSize[],
   columns: GridSize[],
-): UIElement<"block"> {
+}): UIElement<"block"> {
   return new UIGrid(content, rows, columns)
 }

@@ -49,9 +49,12 @@ class UIRadioButton
 
 ///////
 
-export function uiRadioButton(
+export function uiRadioButton({
+  group,
+  checked
+}: {
   group: string,
   checked: ToMem<boolean>,
-): UIElement<"inline"> {
+}): UIElement<"inline"> {
   return new UIRadioButton(group, checked)
 }

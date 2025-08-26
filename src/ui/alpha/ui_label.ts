@@ -42,9 +42,12 @@ class UILabel extends UIInlineElement {
 
 ///////
 
-export function uiLabel(
+export function uiLabel({
+  target,
+  text
+}: {
   target: UILabelTargetMixin,
   text: ToGet<string>
-): UIElement<"inline"> {
+}): UIElement<"inline"> {
   return new UILabel(target, text)
 }

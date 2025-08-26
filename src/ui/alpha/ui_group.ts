@@ -42,9 +42,12 @@ class UIGroup extends UIBlockElement {
 
 ///////
 
-export function uiGroup(
+export function uiGroup({
+  content,
+  legend
+}: {
   content: UIElement<"block">,
   legend: ToGet<string>,
-): UIElement<"block"> {
+}): UIElement<"block"> {
   return new UIGroup(content, legend)
 }

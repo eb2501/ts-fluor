@@ -10,19 +10,19 @@ class UITextBox
   extends UIInlineElement
   implements UILabelTargetMixin
 {
-  private readonly live: boolean
-  private readonly placeholder: Get<string>
   private readonly text: Mem<string>
+  private readonly live?: boolean
+  private readonly placeholder?: Get<string>
 
   constructor(
-    live: boolean,
-    placeholder: ToGet<string>,
-    text: ToMem<string>
+    text: ToMem<string>,
+    live?: boolean,
+    placeholder?: ToGet<string>,
   ) {
     super()
-    this.live = live
-    this.placeholder = toGet(placeholder)
     this.text = toMem(text)
+    this.live = live
+    this.placeholder = placeholder ? toGet(placeholder) : undefined
   }
 
   readonly id = once(() => newId().toString())
@@ -33,24 +33,26 @@ class UITextBox
     input.className = "fluor-uiTextBox"
     input.type = 'text'
 
-    const placeholderTarget = view(
-      () => input.placeholder,
-      (value) => input.placeholder = value
-    )
-
-    attach(
-      input,
-      new OneWayPipe(
-        this.placeholder,
-        placeholderTarget,
+    if (this.placeholder !== undefined) {
+      const placeholderTarget = view(
+        () => input.placeholder,
+        (value) => input.placeholder = value
       )
-    )
+
+      attach(
+        input,
+        new OneWayPipe(
+          this.placeholder,
+          placeholderTarget,
+        )
+      )
+    }
 
     const textTarget = touch(view(
       () => input.value,
       (value) => input.value = value,
     ))
-    if (this.live) {
+    if (this.live ?? false) {
       input.addEventListener('input', () => textTarget.touch())
     } else {
       input.onchange = () => textTarget.touch()
@@ -70,10 +72,14 @@ class UITextBox
 
 ///////
 
-export function uiTextBox(
-  live: boolean,
-  placeholder: ToGet<string>,
-  text: ToMem<string>
-): UIElement<"inline"> & UILabelTargetMixin {
-  return new UITextBox(live, placeholder, text)
+export function uiTextBox({
+  text,
+  live,
+  placeholder,
+}: {
+  text: ToMem<string>,
+  live?: boolean,
+  placeholder?: ToGet<string>,
+}): UIElement<"inline"> & UILabelTargetMixin {
+  return new UITextBox(text, live, placeholder)
 }

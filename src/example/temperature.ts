@@ -39,14 +39,14 @@ export class View extends UIComponent<"block"> {
 
   readonly model = cell<Model>(new Model())
 
-  private readonly inputPart = once(() => uiNumberTextBox(
-    true,
-    "Enter temperature",
-    view(
+  private readonly inputPart = once(() => uiNumberTextBox({
+    live: true,
+    placeholder: "Enter temperature",
+    value: view(
       () => this.model().sourceValue(),
       (value) => this.model().sourceValue(value)
     )
-  ))
+  }))
 
   private readonly leftPart = once(() => uiPara(
     [this.inputPart()]
@@ -66,16 +66,16 @@ export class View extends UIComponent<"block"> {
     )
   ))
 
-  private readonly selectPart = once(() => uiGrid(
-    [
-      uiPara([this.celsiusPart()]),
+  private readonly selectPart = once(() => uiGrid({
+    content: [
+      this.celsiusPart(),
       uiPara(["Celsius"]),
-      uiPara([this.fahrenheitPart()]),
+      this.fahrenheitPart(),
       uiPara(["Fahrenheit"])
     ],
-    ["auto", "auto"],
-    ["auto", "auto"],
-  ))
+    rows: ["auto", "auto"],
+    columns: ["auto", "auto"],
+  }))
 
   private readonly outputText = node(() => {
     if (this.inputPart().valid()) {
@@ -90,13 +90,13 @@ export class View extends UIComponent<"block"> {
     view(() => [this.outputText()]),
   ))
 
-  readonly element = once(() => uiGrid(
-    [
+  readonly element = once(() => uiGrid({
+    content: [
       this.leftPart(),
       this.selectPart(),
       this.outputPart()
     ],
-    ["auto"],
-    ["auto", "auto", "auto"],
-  ))
+    rows: ["auto"],
+    columns: ["auto", "auto", "auto"],
+  }))
 }

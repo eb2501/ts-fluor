@@ -13,7 +13,7 @@ class UIClasses<T extends UIType> extends UIElement<T> {
   }
 
   readonly type = once(() => this.content.type())
-  
+
   readonly html = once(() => {
     const tag = this.type() === "block" ? "div" : "span"
     const html = document.createElement(tag)
@@ -42,9 +42,12 @@ class UIClasses<T extends UIType> extends UIElement<T> {
 
 ///////
 
-export function uiClasses<T extends UIType>(
+export function uiClasses<T extends UIType>({
+  content,
+  classes
+}: {
   content: UIElement<T>,
   classes: ToGet<string[]>
-): UIElement<T> {
+}): UIElement<T> {
   return new UIClasses(content, classes)
 }
