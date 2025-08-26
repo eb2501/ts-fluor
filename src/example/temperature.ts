@@ -8,6 +8,7 @@ import { uiCheckBox } from "../ui/alpha/ui_check_box"
 import { UIComponent } from "../ui/alpha/ui_component"
 import { uiGrid } from "../ui/alpha/ui_grid"
 import { uiPara } from "../ui/alpha/ui_para"
+import { uiText } from "../ui/alpha/ui_text"
 import { uiNumberTextBox } from "../ui/beta/ui_parsed_tb"
 
 export type TemperatureUnit = 'celsius' | 'fahrenheit'
@@ -86,9 +87,7 @@ export class View extends UIComponent<"block"> {
     }
   })
 
-  private readonly outputPart = once(() => uiPara(
-    view(() => [this.outputText()]),
-  ))
+  private readonly outputPart = once(() => uiText(this.outputText))
 
   readonly element = once(() => uiGrid({
     content: [

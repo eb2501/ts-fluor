@@ -63,6 +63,6 @@ const piece = uiFlex({
   align: "center",
 })
 
-const _ = new UIApp("#app", piece)
+// const _ = new UIApp("#app", piece)
 
-// const _ = new UIApp("#app", new View())
+const _ = new UIApp("#app", new View())
